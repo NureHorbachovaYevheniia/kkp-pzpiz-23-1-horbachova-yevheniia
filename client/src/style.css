@@ -1,4 +1,99 @@
 body {
-  margin: 1rem;
-  font-family: sans-serif;
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: #f0f0f0;
+}
+
+.box {
+  max-width: 28rem;
+  margin: 2rem auto;
+  padding: 1.25rem 1.5rem;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+h1 {
+  margin: 0 0 0.75rem;
+  font-size: 1.35rem;
+}
+
+.hint {
+  margin: 0 0 1rem;
+  color: #555;
+  font-size: 0.95rem;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.form input {
+  padding: 0.45rem 0.5rem;
+  font-size: 1rem;
+}
+
+.form button,
+#logout {
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.err {
+  min-height: 1.25rem;
+  margin: 0.75rem 0 0;
+  color: #b00020;
+  font-size: 0.9rem;
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.top h1 {
+  margin: 0;
+}
+
+.user {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  color: #444;
+}
+
+.sets {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.sets li {
+  margin-bottom: 0.35rem;
+}
+
+.set-title {
+  font-weight: 500;
+}
+
+.meta {
+  color: #888;
+  font-size: 0.85rem;
+}
+
+.empty {
+  list-style: none;
+  margin-left: -1.2rem;
+  color: #666;
 }
