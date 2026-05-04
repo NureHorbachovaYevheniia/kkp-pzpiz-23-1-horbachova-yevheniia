@@ -53,7 +53,30 @@ export function initDb() {
     );
   `);
 
+  seedDemoIfEmpty(db);
+
   return db;
+}
+
+function seedDemoIfEmpty(database) {
+  const n = database.prepare('SELECT COUNT(*) AS n FROM categories').get().n;
+  if (n > 0) return;
+
+  const tx = database.transaction(() => {
+    const cat = database.prepare('INSERT INTO categories (title) VALUES (?)').run('Англійська');
+    const set = database
+      .prepare('INSERT INTO word_sets (category_id, title) VALUES (?, ?)')
+      .run(cat.lastInsertRowid, 'Привітання та базові слова');
+    const setId = set.lastInsertRowid;
+    const ins = database.prepare(
+      'INSERT INTO words (word_set_id, term, translation) VALUES (?, ?, ?)',
+    );
+    ins.run(setId, 'hello', 'привіт');
+    ins.run(setId, 'goodbye', 'допобачення');
+    ins.run(setId, 'book', 'книга');
+    ins.run(setId, 'water', 'вода');
+  });
+  tx();
 }
 
 export function getDb() {
