@@ -8,5 +8,6 @@
 - `GET /api/auth/me` — заголовок `Authorization: Bearer <token>` → `{ id, email, role }`.
 - `GET /api/categories` — Bearer → `{ id, title }[]`.
 - `GET /api/word-sets` — Bearer → `{ id, category_id, title, created_at }[]`.
+- `GET /api/word-sets/:setId/words` — Bearer → `{ id, term, translation }[]`; нема набору → **404**.
 
 `cd client && npm install && npm run dev`.

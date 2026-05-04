@@ -16,4 +16,22 @@ router.get('/word-sets', requireAuth, (_req, res) => {
   return res.json(rows);
 });
 
+router.get('/word-sets/:setId/words', requireAuth, (req, res) => {
+  const setId = Number(req.params.setId);
+  if (!Number.isInteger(setId) || setId < 1) {
+    return res.status(400).json({ error: 'Невірний id набору' });
+  }
+
+  const db = getDb();
+  const set = db.prepare('SELECT id FROM word_sets WHERE id = ?').get(setId);
+  if (!set) {
+    return res.status(404).json({ error: 'Набір не знайдено' });
+  }
+
+  const rows = db
+    .prepare('SELECT id, term, translation FROM words WHERE word_set_id = ? ORDER BY id')
+    .all(setId);
+  return res.json(rows);
+});
+
 export default router;
