@@ -9,4 +9,11 @@ router.get('/categories', requireAuth, (_req, res) => {
   return res.json(rows);
 });
 
+router.get('/word-sets', requireAuth, (_req, res) => {
+  const rows = getDb()
+    .prepare('SELECT id, category_id, title, created_at FROM word_sets ORDER BY id')
+    .all();
+  return res.json(rows);
+});
+
 export default router;
