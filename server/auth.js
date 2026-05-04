@@ -1,6 +1,10 @@
 import { Router } from 'express';
 import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 import { getDb } from './db.js';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-only-change-me';
+const JWT_EXPIRES = '7d';
 
 const router = Router();
 
@@ -33,6 +37,33 @@ router.post('/register', (req, res) => {
     }
     throw err;
   }
+});
+
+router.post('/login', (req, res) => {
+  const email =
+    typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+  const password = typeof req.body.password === 'string' ? req.body.password : '';
+
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Вкажіть email і пароль' });
+  }
+
+  const row = getDb()
+    .prepare('SELECT id, email, role, password_hash FROM users WHERE email = ?')
+    .get(email);
+
+  if (!row || !bcrypt.compareSync(password, row.password_hash)) {
+    return res.status(401).json({ error: 'Невірний email або пароль' });
+  }
+
+  const token = jwt.sign({ sub: row.id, role: row.role }, JWT_SECRET, {
+    expiresIn: JWT_EXPIRES,
+  });
+
+  return res.json({
+    token,
+    user: { id: row.id, email: row.email, role: row.role },
+  });
 });
 
 export default router;
