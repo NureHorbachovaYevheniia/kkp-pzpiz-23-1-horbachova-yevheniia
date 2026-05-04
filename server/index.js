@@ -1,6 +1,7 @@
 import express from 'express';
 import { initDb, getDb } from './db.js';
 import authRouter from './auth.js';
+import catalogRouter from './catalog.js';
 
 initDb();
 
@@ -24,6 +25,7 @@ app.get('/health', (_req, res) => {
 });
 
 app.use('/api/auth', authRouter);
+app.use('/api', catalogRouter);
 
 app.listen(PORT, () => {
   console.log('http://localhost:' + PORT);
