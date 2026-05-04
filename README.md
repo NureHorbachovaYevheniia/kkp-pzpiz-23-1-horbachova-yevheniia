@@ -4,6 +4,7 @@
 
 
 - `POST /api/auth/register` — JSON `{"email":"...","password":"..."}` (пароль ≥ 6). Перший користувач — `admin`, далі — `user`.
-- `POST /api/auth/login` — → `{ token, user }`. 
+- `POST /api/auth/login` — JSON `{"email":"...","password":"..."}` → `{ token, user }` 
+- `GET /api/auth/me` — заголовок `Authorization: Bearer <token>` → `{ id, email, role }`.
 
 `cd client && npm install && npm run dev`.

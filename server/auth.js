@@ -8,6 +8,28 @@ const JWT_EXPIRES = '7d';
 
 const router = Router();
 
+export function requireAuth(req, res, next) {
+  const raw = req.headers.authorization || '';
+  const m = /^Bearer\s+(\S+)/i.exec(raw);
+  if (!m) {
+    return res.status(401).json({ error: 'Потрібен токен' });
+  }
+  let payload;
+  try {
+    payload = jwt.verify(m[1], JWT_SECRET);
+  } catch {
+    return res.status(401).json({ error: 'Недійсний токен' });
+  }
+  const row = getDb()
+    .prepare('SELECT id, email, role FROM users WHERE id = ?')
+    .get(payload.sub);
+  if (!row) {
+    return res.status(401).json({ error: 'Недійсний токен' });
+  }
+  req.user = row;
+  next();
+}
+
 router.post('/register', (req, res) => {
   const email =
     typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
@@ -63,6 +85,14 @@ router.post('/login', (req, res) => {
   return res.json({
     token,
     user: { id: row.id, email: row.email, role: row.role },
+  });
+});
+
+router.get('/me', requireAuth, (req, res) => {
+  return res.json({
+    id: req.user.id,
+    email: req.user.email,
+    role: req.user.role,
   });
 });
 
