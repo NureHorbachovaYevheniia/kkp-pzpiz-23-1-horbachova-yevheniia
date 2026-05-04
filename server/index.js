@@ -1,5 +1,6 @@
 import express from 'express';
 import { initDb, getDb } from './db.js';
+import authRouter from './auth.js';
 
 initDb();
 
@@ -21,6 +22,8 @@ app.get('/health', (_req, res) => {
   const row = getDb().prepare('SELECT 1 AS n').get();
   res.json({ ok: true, db: row && row.n === 1 });
 });
+
+app.use('/api/auth', authRouter);
 
 app.listen(PORT, () => {
   console.log('http://localhost:' + PORT);
