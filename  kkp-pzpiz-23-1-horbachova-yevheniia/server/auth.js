@@ -1,24 +1,36 @@
 import { Router } from 'express';
 import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 import { getDb } from './db.js';
 
 const router = Router();
 
-// генеруємо випадковий токен
-function makeToken() {
-  return Math.random().toString(36).slice(2) + Date.now().toString(36);
+// секрет для підпису JWT
+const JWT_SECRET = process.env.JWT_SECRET || 'learnly_dev_secret_change_me';
+const JWT_EXPIRES_IN = '7d';
+
+// створюємо JWT для користувача
+function makeToken(user) {
+  return jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 }
 
-// перевіряємо токен з заголовка і знаходимо користувача в базі
+// перевіряємо JWT з заголовка і знаходимо користувача в базі
 export function requireAuth(req, res, next) {
   const header = req.headers.authorization || '';
   const token = header.replace('Bearer ', '').trim();
   if (!token) {
     return res.status(401).json({ error: 'Потрібен токен' });
   }
+  let payload;
+  try {
+    payload = jwt.verify(token, JWT_SECRET);
+  } catch {
+    // підпис невірний або токен прострочений
+    return res.status(401).json({ error: 'Недійсний токен' });
+  }
   const user = getDb()
-    .prepare('SELECT id, name, email, role FROM users WHERE token = ?')
-    .get(token);
+    .prepare('SELECT id, name, email, role FROM users WHERE id = ?')
+    .get(payload.id);
   if (!user) {
     return res.status(401).json({ error: 'Недійсний токен' });
   }
@@ -87,9 +99,8 @@ router.post('/login', (req, res) => {
     return res.status(401).json({ error: 'Невірний email або пароль' });
   }
 
-  // створюємо новий токен і зберігаємо його в базі
-  const token = makeToken();
-  getDb().prepare('UPDATE users SET token = ? WHERE id = ?').run(token, user.id);
+  // створюємо підписаний JWT
+  const token = makeToken(user);
 
   return res.json({
     token,
