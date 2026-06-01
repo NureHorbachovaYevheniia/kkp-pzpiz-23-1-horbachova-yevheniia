@@ -1,16 +1,17 @@
 import { api, setToken, logout } from '../api.js';
 import { el, escapeHtml } from '../utils.js';
 import { appState } from '../state.js';
+import { t } from '../i18n.js';
 
 export function renderHome(root, navigate) {
   root.replaceChildren(
     el(`
       <main class="box">
         <h1>Learnly</h1>
-        <p class="hint">Навчальна платформа для вивчення слів: класи, завдання, картки та тести.</p>
+        <p class="hint">${escapeHtml(t('home.hint'))}</p>
         <div class="card-actions card-actions--stack">
-          <button type="button" id="go-login" class="btn btn--primary btn--block">Увійти</button>
-          <button type="button" id="go-register" class="btn btn--secondary btn--block">Реєстрація</button>
+          <button type="button" id="go-login" class="btn btn--primary btn--block">${escapeHtml(t('btn.login'))}</button>
+          <button type="button" id="go-register" class="btn btn--secondary btn--block">${escapeHtml(t('btn.register'))}</button>
         </div>
       </main>
     `),
@@ -23,13 +24,13 @@ export function renderLogin(root, navigate) {
   root.replaceChildren(
     el(`
       <main class="box">
-        <h1>Вхід</h1>
+        <h1>${escapeHtml(t('login.title'))}</h1>
         <form id="login-form" class="form">
-          <label>Email <input name="email" type="email" autocomplete="username" required /></label>
-          <label>Пароль <input name="password" type="password" autocomplete="current-password" required /></label>
-          <button type="submit" class="btn btn--primary btn--block">Увійти</button>
+          <label>${escapeHtml(t('label.email'))} <input name="email" type="email" autocomplete="username" required /></label>
+          <label>${escapeHtml(t('label.password'))} <input name="password" type="password" autocomplete="current-password" required /></label>
+          <button type="submit" class="btn btn--primary btn--block">${escapeHtml(t('btn.login'))}</button>
         </form>
-        <p class="hint"><button type="button" id="to-register" class="btn btn--ghost btn--sm">Немає акаунта? Зареєструватись</button></p>
+        <p class="hint"><button type="button" id="to-register" class="btn btn--ghost btn--sm">${escapeHtml(t('login.noAccount'))}</button></p>
         <p id="login-err" class="err" role="alert"></p>
       </main>
     `),
@@ -52,7 +53,7 @@ export function renderLogin(root, navigate) {
       appState.user = data.user;
       navigate(data.user.role === 'teacher' ? 'teacher-dashboard' : 'student-dashboard');
     } catch (e2) {
-      err.textContent = e2.message || 'Помилка входу';
+      err.textContent = e2.message || t('error.login');
     }
   });
 }
@@ -61,20 +62,20 @@ export function renderRegister(root, navigate) {
   root.replaceChildren(
     el(`
       <main class="box">
-        <h1>Реєстрація</h1>
+        <h1>${escapeHtml(t('register.title'))}</h1>
         <form id="register-form" class="form">
-          <label>Ім'я <input name="name" type="text" required maxlength="100" /></label>
-          <label>Email <input name="email" type="email" autocomplete="username" required /></label>
-          <label>Пароль <input name="password" type="password" autocomplete="new-password" required minlength="6" /></label>
-          <label>Роль
+          <label>${escapeHtml(t('label.name'))} <input name="name" type="text" required maxlength="100" /></label>
+          <label>${escapeHtml(t('label.email'))} <input name="email" type="email" autocomplete="username" required /></label>
+          <label>${escapeHtml(t('label.password'))} <input name="password" type="password" autocomplete="new-password" required minlength="6" /></label>
+          <label>${escapeHtml(t('label.role'))}
             <select name="role" required>
-              <option value="student">Учень</option>
-              <option value="teacher">Викладач</option>
+              <option value="student">${escapeHtml(t('role.student'))}</option>
+              <option value="teacher">${escapeHtml(t('role.teacher'))}</option>
             </select>
           </label>
-          <button type="submit" class="btn btn--primary btn--block">Зареєструватись</button>
+          <button type="submit" class="btn btn--primary btn--block">${escapeHtml(t('register.submit'))}</button>
         </form>
-        <p class="hint"><button type="button" id="to-login" class="btn btn--ghost btn--sm">Вже є акаунт? Увійти</button></p>
+        <p class="hint"><button type="button" id="to-login" class="btn btn--ghost btn--sm">${escapeHtml(t('register.hasAccount'))}</button></p>
         <p id="reg-err" class="err" role="alert"></p>
       </main>
     `),
@@ -106,7 +107,7 @@ export function renderRegister(root, navigate) {
       appState.user = data.user;
       navigate(data.user.role === 'teacher' ? 'teacher-dashboard' : 'student-dashboard');
     } catch (e2) {
-      err.textContent = e2.message || 'Помилка реєстрації';
+      err.textContent = e2.message || t('error.register');
     }
   });
 }
@@ -128,14 +129,15 @@ export function renderBrandAccount(user, navigate) {
     slot.replaceChildren();
     return;
   }
+  const roleLabel = user.role === 'teacher' ? t('role.teacher') : t('role.student');
   slot.replaceChildren(
     el(`
       <div class="brand__account-inner">
         <div class="brand__user">
           <span class="brand__name">${escapeHtml(user.name)}</span>
-          <span class="brand__role">${user.role === 'teacher' ? 'Викладач' : 'Учень'} · ${escapeHtml(user.email)}</span>
+          <span class="brand__role">${escapeHtml(roleLabel)} · ${escapeHtml(user.email)}</span>
         </div>
-        <button type="button" id="brand-logout" class="btn brand__logout btn--sm">Вийти</button>
+        <button type="button" id="brand-logout" class="btn brand__logout btn--sm">${escapeHtml(t('btn.logout'))}</button>
       </div>
     `),
   );

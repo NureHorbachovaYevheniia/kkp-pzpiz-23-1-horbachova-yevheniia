@@ -2,6 +2,7 @@ import { api } from '../api.js';
 import { el, escapeHtml, formatDate, statusLabel } from '../utils.js';
 import { appState } from '../state.js';
 import { headerBar, bindLogout } from './auth.js';
+import { t } from '../i18n.js';
 
 const LANGUAGES = [
   'English',
@@ -24,8 +25,14 @@ export async function renderTeacherDashboard(root, navigate) {
     .map(
       (c) => `<li class="set-row">
         <span class="set-title">${escapeHtml(c.title)}</span>
-        <span class="meta">${escapeHtml(c.subject || '—')} · ${c.student_count || 0} учнів · код: <strong>${escapeHtml(c.class_code)}</strong></span>
-        <button type="button" class="btn btn--primary btn--sm open-class" data-id="${c.id}">Відкрити</button>
+        <span class="meta">${escapeHtml(
+          t('teacher.classMeta', {
+            subject: c.subject || '—',
+            count: c.student_count || 0,
+            code: c.class_code,
+          }),
+        )}</span>
+        <button type="button" class="btn btn--primary btn--sm open-class" data-id="${c.id}">${escapeHtml(t('btn.open'))}</button>
       </li>`,
     )
     .join('');
@@ -34,51 +41,62 @@ export async function renderTeacherDashboard(root, navigate) {
     .map(
       (s) => `<li class="set-row">
         <span class="set-title">${escapeHtml(s.title)}</span>
-        <span class="meta">${escapeHtml(s.language || '—')} · ${s.card_count || 0} карток</span>
-        <button type="button" class="btn btn--primary btn--sm open-set" data-id="${s.id}">Відкрити</button>
+        <span class="meta">${escapeHtml(
+          t('teacher.setMeta', {
+            language: s.language || '—',
+            count: s.card_count || 0,
+          }),
+        )}</span>
+        <button type="button" class="btn btn--primary btn--sm open-set" data-id="${s.id}">${escapeHtml(t('btn.open'))}</button>
       </li>`,
     )
     .join('');
 
   const main = el(`
     <main class="box box--wide box--deck">
-      ${headerBar(appState.user, null, `<button type="button" id="toggle-add-class" class="btn btn--primary btn--sm">+ Створити клас</button>`).outerHTML}
+      ${headerBar(appState.user, null, `<button type="button" id="toggle-add-class" class="btn btn--primary btn--sm">${escapeHtml(t('teacher.createClass'))}</button>`).outerHTML}
       <section class="deck-section">
-        <h2 class="deck-heading">Кабінет викладача</h2>
-        <p class="deck-hint">Класів: ${dash.stats.class_count} · Активних завдань: ${dash.stats.active_assignments} · Виконання: ${dash.stats.completion_percent}%</p>
+        <h2 class="deck-heading">${escapeHtml(t('teacher.dashboard.title'))}</h2>
+        <p class="deck-hint">${escapeHtml(
+          t('teacher.dashboard.stats', {
+            classes: dash.stats.class_count,
+            assignments: dash.stats.active_assignments,
+            percent: dash.stats.completion_percent,
+          }),
+        )}</p>
       </section>
       <section class="deck-section">
-        <h2 class="deck-heading">Мої класи</h2>
+        <h2 class="deck-heading">${escapeHtml(t('teacher.myClasses'))}</h2>
         <section class="add-word-box" id="add-class-box" hidden>
-          <p class="add-word-title">Новий клас</p>
+          <p class="add-word-title">${escapeHtml(t('teacher.newClass'))}</p>
           <form id="new-class-form" class="form">
-            <input name="title" placeholder="Назва класу" required maxlength="200" />
-            <input name="subject" placeholder="Предмет / мова" maxlength="100" />
-            <input name="description" placeholder="Короткий опис" maxlength="300" />
-            <button type="submit" class="btn btn--secondary btn--sm">Створити</button>
+            <input name="title" placeholder="${escapeHtml(t('teacher.placeholder.classTitle'))}" required maxlength="200" />
+            <input name="subject" placeholder="${escapeHtml(t('teacher.placeholder.subject'))}" maxlength="100" />
+            <input name="description" placeholder="${escapeHtml(t('teacher.placeholder.description'))}" maxlength="300" />
+            <button type="submit" class="btn btn--secondary btn--sm">${escapeHtml(t('btn.create'))}</button>
           </form>
           <p id="class-err" class="err"></p>
         </section>
-        ${classList ? `<ul class="sets">${classList}</ul>` : '<p class="empty-msg">Ще немає класів.</p>'}
+        ${classList ? `<ul class="sets">${classList}</ul>` : `<p class="empty-msg">${escapeHtml(t('teacher.noClasses'))}</p>`}
       </section>
       <section class="deck-section">
         <div class="deck-section-head">
-          <h2 class="deck-heading">Набори слів</h2>
-          <button type="button" id="toggle-add-set" class="btn btn--secondary btn--sm">+ Додати набір</button>
+          <h2 class="deck-heading">${escapeHtml(t('teacher.wordSets'))}</h2>
+          <button type="button" id="toggle-add-set" class="btn btn--secondary btn--sm">${escapeHtml(t('teacher.addSet'))}</button>
         </div>
         <section class="add-word-box" id="add-set-box" hidden>
-          <p class="add-word-title">Новий набір</p>
+          <p class="add-word-title">${escapeHtml(t('teacher.newSet'))}</p>
           <form id="new-set-form" class="form">
-            <input name="title" placeholder="Назва набору" required maxlength="200" />
+            <input name="title" placeholder="${escapeHtml(t('teacher.placeholder.setTitle'))}" required maxlength="200" />
             <select name="language" required>
-              <option value="" disabled selected>Оберіть мову</option>
+              <option value="" disabled selected>${escapeHtml(t('teacher.placeholder.selectLanguage'))}</option>
               ${LANGUAGES.map((lng) => `<option value="${escapeHtml(lng)}">${escapeHtml(lng)}</option>`).join('')}
             </select>
-            <button type="submit" class="btn btn--secondary btn--sm">Створити</button>
+            <button type="submit" class="btn btn--secondary btn--sm">${escapeHtml(t('btn.create'))}</button>
           </form>
           <p id="set-err" class="err"></p>
         </section>
-        ${setList ? `<ul class="sets">${setList}</ul>` : '<p class="empty-msg">Немає наборів.</p>'}
+        ${setList ? `<ul class="sets">${setList}</ul>` : `<p class="empty-msg">${escapeHtml(t('teacher.noSets'))}</p>`}
       </section>
     </main>
   `);
@@ -98,7 +116,7 @@ export async function renderTeacherDashboard(root, navigate) {
     const fd = new FormData(e.target);
     const title = String(fd.get('title') || '').trim();
     if (title.length < 1 || title.length > 200) {
-      errEl.textContent = 'Назва класу має бути 1–200 символів';
+      errEl.textContent = t('teacher.err.classTitle');
       return;
     }
     try {
@@ -138,11 +156,11 @@ export async function renderTeacherDashboard(root, navigate) {
     const title = String(fd.get('title') || '').trim();
     const language = String(fd.get('language') || '').trim();
     if (title.length < 1 || title.length > 200) {
-      errEl.textContent = 'Назва набору має бути 1–200 символів';
+      errEl.textContent = t('teacher.err.setTitle');
       return;
     }
     if (!language) {
-      errEl.textContent = 'Оберіть мову набору';
+      errEl.textContent = t('teacher.err.setLanguage');
       return;
     }
     try {
@@ -174,7 +192,7 @@ export async function renderTeacherClass(root, navigate) {
     .map(
       (a) => `<li class="set-row">
         <span class="set-title">${escapeHtml(a.title)}</span>
-        <span class="meta">${escapeHtml(a.word_set_title)} · до ${formatDate(a.deadline)} · ${statusLabel(a.mode)}</span>
+        <span class="meta">${escapeHtml(a.word_set_title)} · ${escapeHtml(t('teacher.deadlineUntil', { date: formatDate(a.deadline) }))} · ${escapeHtml(statusLabel(a.mode))}</span>
       </li>`,
     )
     .join('');
@@ -182,33 +200,33 @@ export async function renderTeacherClass(root, navigate) {
   root.replaceChildren(
     el(`
       <main class="box box--wide box--deck">
-        ${headerBar(appState.user, null, `<button type="button" id="back" class="btn btn--ghost btn--sm">← Кабінет</button><button type="button" id="new-assignment" class="btn btn--primary btn--sm">Завдання</button>`).outerHTML}
+        ${headerBar(appState.user, null, `<button type="button" id="back" class="btn btn--ghost btn--sm">${escapeHtml(t('btn.backCabinet'))}</button><button type="button" id="new-assignment" class="btn btn--primary btn--sm">${escapeHtml(t('teacher.newAssignment'))}</button>`).outerHTML}
         <div class="deck-section-head">
           <h2 class="deck-heading">${escapeHtml(data.title)}</h2>
           <div>
-            <button type="button" id="edit-class" class="btn btn--secondary btn--sm">Редагувати</button>
-            <button type="button" id="delete-class" class="btn btn--ghost btn--sm">Видалити</button>
+            <button type="button" id="edit-class" class="btn btn--secondary btn--sm">${escapeHtml(t('teacher.editClass'))}</button>
+            <button type="button" id="delete-class" class="btn btn--ghost btn--sm">${escapeHtml(t('teacher.deleteClass'))}</button>
           </div>
         </div>
-        <p class="deck-hint">${escapeHtml(data.subject || '—')} · Код класу: <strong>${escapeHtml(data.class_code)}</strong></p>
+        <p class="deck-hint">${escapeHtml(data.subject || '—')} · ${escapeHtml(t('teacher.classCode'))}: <strong>${escapeHtml(data.class_code)}</strong></p>
         ${data.description ? `<p class="deck-hint">${escapeHtml(data.description)}</p>` : ''}
         <section class="add-word-box" id="edit-class-box" hidden>
-          <p class="add-word-title">Редагувати клас</p>
+          <p class="add-word-title">${escapeHtml(t('teacher.editClassTitle'))}</p>
           <form id="edit-class-form" class="form">
-            <input name="title" placeholder="Назва класу" required maxlength="200" value="${escapeHtml(data.title)}" />
-            <input name="subject" placeholder="Предмет / мова" maxlength="100" value="${escapeHtml(data.subject || '')}" />
-            <input name="description" placeholder="Короткий опис" maxlength="300" value="${escapeHtml(data.description || '')}" />
-            <button type="submit" class="btn btn--secondary btn--sm">Зберегти</button>
+            <input name="title" placeholder="${escapeHtml(t('teacher.placeholder.classTitle'))}" required maxlength="200" value="${escapeHtml(data.title)}" />
+            <input name="subject" placeholder="${escapeHtml(t('teacher.placeholder.subject'))}" maxlength="100" value="${escapeHtml(data.subject || '')}" />
+            <input name="description" placeholder="${escapeHtml(t('teacher.placeholder.description'))}" maxlength="300" value="${escapeHtml(data.description || '')}" />
+            <button type="submit" class="btn btn--secondary btn--sm">${escapeHtml(t('btn.save'))}</button>
           </form>
           <p id="edit-class-err" class="err"></p>
         </section>
         <section class="deck-section">
-          <h3 class="deck-heading">Учні</h3>
-          ${students ? `<ul class="sets">${students}</ul>` : '<p class="empty-msg">Ще немає учнів.</p>'}
+          <h3 class="deck-heading">${escapeHtml(t('teacher.students'))}</h3>
+          ${students ? `<ul class="sets">${students}</ul>` : `<p class="empty-msg">${escapeHtml(t('teacher.noStudents'))}</p>`}
         </section>
         <section class="deck-section">
-          <h3 class="deck-heading">Завдання</h3>
-          ${assignments ? `<ul class="sets">${assignments}</ul>` : '<p class="empty-msg">Завдань ще немає.</p>'}
+          <h3 class="deck-heading">${escapeHtml(t('teacher.assignments'))}</h3>
+          ${assignments ? `<ul class="sets">${assignments}</ul>` : `<p class="empty-msg">${escapeHtml(t('teacher.noAssignments'))}</p>`}
         </section>
       </main>
     `),
@@ -230,7 +248,7 @@ export async function renderTeacherClass(root, navigate) {
     const fd = new FormData(e.target);
     const title = String(fd.get('title') || '').trim();
     if (title.length < 1 || title.length > 200) {
-      errEl.textContent = 'Назва класу має бути 1–200 символів';
+      errEl.textContent = t('teacher.err.classTitle');
       return;
     }
     try {
@@ -249,7 +267,7 @@ export async function renderTeacherClass(root, navigate) {
   });
 
   root.querySelector('#delete-class').addEventListener('click', async () => {
-    if (!window.confirm('Видалити клас разом з усіма завданнями та списком учнів?')) return;
+    if (!window.confirm(t('teacher.deleteClassConfirm'))) return;
     try {
       await api('/api/classes/' + appState.classId, { method: 'DELETE' });
       navigate('teacher-dashboard');
@@ -265,8 +283,13 @@ export async function renderTeacherWordSets(root, navigate) {
     .map(
       (s) => `<li class="set-row">
         <span class="set-title">${escapeHtml(s.title)}</span>
-        <span class="meta">${escapeHtml(s.language || '—')} · ${s.card_count || 0} карток</span>
-        <button type="button" class="btn btn--primary btn--sm open-set" data-id="${s.id}">Відкрити</button>
+        <span class="meta">${escapeHtml(
+          t('teacher.setMeta', {
+            language: s.language || '—',
+            count: s.card_count || 0,
+          }),
+        )}</span>
+        <button type="button" class="btn btn--primary btn--sm open-set" data-id="${s.id}">${escapeHtml(t('btn.open'))}</button>
       </li>`,
     )
     .join('');
@@ -274,22 +297,22 @@ export async function renderTeacherWordSets(root, navigate) {
   root.replaceChildren(
     el(`
       <main class="box box--wide box--deck">
-        ${headerBar(appState.user, null, `<button type="button" id="back" class="btn btn--ghost btn--sm">← Кабінет</button><button type="button" id="toggle-add-set" class="btn btn--primary btn--sm">+ Додати набір</button>`).outerHTML}
+        ${headerBar(appState.user, null, `<button type="button" id="back" class="btn btn--ghost btn--sm">${escapeHtml(t('btn.backCabinet'))}</button><button type="button" id="toggle-add-set" class="btn btn--primary btn--sm">${escapeHtml(t('teacher.addSet'))}</button>`).outerHTML}
         <section class="deck-section">
-          <h2 class="deck-heading">Набори слів</h2>
+          <h2 class="deck-heading">${escapeHtml(t('teacher.wordSets'))}</h2>
           <section class="add-word-box" id="add-set-box" hidden>
-            <p class="add-word-title">Новий набір</p>
+            <p class="add-word-title">${escapeHtml(t('teacher.newSet'))}</p>
             <form id="new-set-form" class="form">
-              <input name="title" placeholder="Назва набору" required maxlength="200" />
+              <input name="title" placeholder="${escapeHtml(t('teacher.placeholder.setTitle'))}" required maxlength="200" />
               <select name="language" required>
-                <option value="" disabled selected>Оберіть мову</option>
+                <option value="" disabled selected>${escapeHtml(t('teacher.placeholder.selectLanguage'))}</option>
                 ${LANGUAGES.map((lng) => `<option value="${escapeHtml(lng)}">${escapeHtml(lng)}</option>`).join('')}
               </select>
-              <button type="submit" class="btn btn--secondary btn--sm">Створити</button>
+              <button type="submit" class="btn btn--secondary btn--sm">${escapeHtml(t('btn.create'))}</button>
             </form>
             <p id="set-err" class="err"></p>
           </section>
-          ${list ? `<ul class="sets">${list}</ul>` : '<p class="empty-msg">Немає наборів.</p>'}
+          ${list ? `<ul class="sets">${list}</ul>` : `<p class="empty-msg">${escapeHtml(t('teacher.noSets'))}</p>`}
         </section>
       </main>
     `),
@@ -309,11 +332,11 @@ export async function renderTeacherWordSets(root, navigate) {
     const title = String(fd.get('title') || '').trim();
     const language = String(fd.get('language') || '').trim();
     if (title.length < 1 || title.length > 200) {
-      errEl.textContent = 'Назва набору має бути 1–200 символів';
+      errEl.textContent = t('teacher.err.setTitle');
       return;
     }
     if (!language) {
-      errEl.textContent = 'Оберіть мову набору';
+      errEl.textContent = t('teacher.err.setLanguage');
       return;
     }
     try {
@@ -359,20 +382,20 @@ export async function renderTeacherWordSet(root, navigate) {
   root.replaceChildren(
     el(`
       <main class="box box--wide box--deck">
-        ${headerBar(appState.user, null, `<button type="button" id="back" class="btn btn--ghost btn--sm">← Кабінет</button><button type="button" id="toggle-add" class="btn btn--primary btn--sm">+ Додати слово</button>`).outerHTML}
+        ${headerBar(appState.user, null, `<button type="button" id="back" class="btn btn--ghost btn--sm">${escapeHtml(t('btn.backCabinet'))}</button><button type="button" id="toggle-add" class="btn btn--primary btn--sm">${escapeHtml(t('teacher.addWord'))}</button>`).outerHTML}
         <h2 class="deck-heading">${escapeHtml(set.title)}</h2>
         <p class="deck-hint">${escapeHtml(set.language)}</p>
         <section class="add-word-box" id="add-word-box" hidden>
-          <p class="add-word-title">Додати картку</p>
+          <p class="add-word-title">${escapeHtml(t('teacher.addCard'))}</p>
           <form id="add-card-form" class="form-row">
-            <input name="word" placeholder="Слово" required />
-            <input name="translation" placeholder="Переклад" required />
-            <input name="image_url" type="url" placeholder="Посилання на фото (необов'язково)" />
-            <button type="submit" class="btn btn--secondary btn--sm">Додати</button>
+            <input name="word" placeholder="${escapeHtml(t('teacher.placeholder.word'))}" required />
+            <input name="translation" placeholder="${escapeHtml(t('teacher.placeholder.translation'))}" required />
+            <input name="image_url" type="url" placeholder="${escapeHtml(t('teacher.placeholder.imageUrl'))}" />
+            <button type="submit" class="btn btn--secondary btn--sm">${escapeHtml(t('teacher.btn.add'))}</button>
           </form>
           <p id="card-err" class="err"></p>
         </section>
-        ${cardList ? `<ul class="sets">${cardList}</ul>` : '<p class="empty-msg">Немає карток.</p>'}
+        ${cardList ? `<ul class="sets">${cardList}</ul>` : `<p class="empty-msg">${escapeHtml(t('teacher.noCards'))}</p>`}
       </main>
     `),
   );
@@ -405,7 +428,7 @@ export async function renderTeacherWordSet(root, navigate) {
   });
   root.querySelectorAll('.del-card').forEach((btn) => {
     btn.addEventListener('click', async () => {
-      if (!window.confirm('Ви точно бажаєте видалити це слово?')) return;
+      if (!window.confirm(t('teacher.deleteCardConfirm'))) return;
       await api('/api/word-cards/' + btn.getAttribute('data-id'), { method: 'DELETE' });
       await renderTeacherWordSet(root, navigate);
     });
@@ -426,22 +449,22 @@ export async function renderTeacherCreateAssignment(root, navigate) {
   root.replaceChildren(
     el(`
       <main class="box box--wide">
-        ${headerBar(appState.user, null, `<button type="button" id="back" class="btn btn--ghost btn--sm">← Клас</button>`).outerHTML}
-        <h2 class="deck-heading">Призначити завдання</h2>
+        ${headerBar(appState.user, null, `<button type="button" id="back" class="btn btn--ghost btn--sm">${escapeHtml(t('btn.backClass'))}</button>`).outerHTML}
+        <h2 class="deck-heading">${escapeHtml(t('teacher.assign.title'))}</h2>
         <form id="assign-form" class="form">
-          <label>Клас <select name="class_id" required>${classOpts}</select></label>
-          <label>Набір слів <select name="word_set_id" required>${setOpts}</select></label>
-          <label>Назва <input name="title" required placeholder="Назва завдання" /></label>
-          <label>Початок <input name="start_date" type="date" value="${today}" required /></label>
-          <label>Дедлайн <input name="deadline" type="date" value="${deadline}" required /></label>
-          <label>Режим
+          <label>${escapeHtml(t('teacher.assign.class'))} <select name="class_id" required>${classOpts}</select></label>
+          <label>${escapeHtml(t('teacher.assign.wordSet'))} <select name="word_set_id" required>${setOpts}</select></label>
+          <label>${escapeHtml(t('teacher.assign.name'))} <input name="title" required placeholder="${escapeHtml(t('teacher.assign.namePlaceholder'))}" /></label>
+          <label>${escapeHtml(t('teacher.assign.start'))} <input name="start_date" type="date" value="${today}" required /></label>
+          <label>${escapeHtml(t('teacher.assign.deadline'))} <input name="deadline" type="date" value="${deadline}" required /></label>
+          <label>${escapeHtml(t('teacher.assign.mode'))}
             <select name="mode">
-              <option value="mixed">Змішаний</option>
-              <option value="study">Вивчення</option>
-              <option value="test">Тест</option>
+              <option value="mixed">${escapeHtml(statusLabel('mixed'))}</option>
+              <option value="study">${escapeHtml(statusLabel('study'))}</option>
+              <option value="test">${escapeHtml(statusLabel('test'))}</option>
             </select>
           </label>
-          <button type="submit" class="btn btn--primary">Створити завдання</button>
+          <button type="submit" class="btn btn--primary">${escapeHtml(t('teacher.assign.submit'))}</button>
         </form>
         <p id="assign-err" class="err"></p>
       </main>

@@ -2,6 +2,7 @@ import { api } from '../api.js';
 import { el, escapeHtml, formatDate, statusLabel, shuffleArray, normalizeAnswer } from '../utils.js';
 import { appState, resetStudyState, resetTestState } from '../state.js';
 import { headerBar, bindLogout } from './auth.js';
+import { t } from '../i18n.js';
 
 export async function renderStudentDashboard(root, navigate) {
   const assignments = await api('/api/student/assignments');
@@ -10,8 +11,8 @@ export async function renderStudentDashboard(root, navigate) {
     .map(
       (a) => `<li class="set-row">
         <span class="set-title">${escapeHtml(a.title)}</span>
-        <span class="meta">${escapeHtml(a.class_title)} · до ${formatDate(a.deadline)}</span>
-        <button type="button" class="btn btn--primary btn--sm open-assign" data-id="${a.id}" data-mode="${escapeHtml(a.mode)}">Відкрити</button>
+        <span class="meta">${escapeHtml(a.class_title)} · ${escapeHtml(t('teacher.deadlineUntil', { date: formatDate(a.deadline) }))}</span>
+        <button type="button" class="btn btn--primary btn--sm open-assign" data-id="${a.id}" data-mode="${escapeHtml(a.mode)}">${escapeHtml(t('btn.open'))}</button>
       </li>`,
     )
     .join('');
@@ -19,10 +20,10 @@ export async function renderStudentDashboard(root, navigate) {
   root.replaceChildren(
     el(`
       <main class="box box--wide box--deck">
-        ${headerBar(appState.user, null, `<button type="button" id="join" class="btn btn--secondary btn--sm">Приєднатись</button>`).outerHTML}
+        ${headerBar(appState.user, null, `<button type="button" id="join" class="btn btn--secondary btn--sm">${escapeHtml(t('student.joinBtn'))}</button>`).outerHTML}
         <section class="deck-section">
-          <h2 class="deck-heading">Активні завдання</h2>
-          ${assignList ? `<ul class="sets">${assignList}</ul>` : '<p class="empty-msg">Немає активних завдань.</p>'}
+          <h2 class="deck-heading">${escapeHtml(t('student.activeAssignments'))}</h2>
+          ${assignList ? `<ul class="sets">${assignList}</ul>` : `<p class="empty-msg">${escapeHtml(t('student.noAssignments'))}</p>`}
         </section>
       </main>
     `),
@@ -41,11 +42,11 @@ export function renderStudentJoin(root, navigate) {
   root.replaceChildren(
     el(`
       <main class="box">
-        ${headerBar(appState.user, null, `<button type="button" id="back" class="btn btn--ghost btn--sm">← Кабінет</button>`).outerHTML}
-        <h2 class="deck-heading">Приєднатися до класу</h2>
+        ${headerBar(appState.user, null, `<button type="button" id="back" class="btn btn--ghost btn--sm">${escapeHtml(t('btn.backCabinet'))}</button>`).outerHTML}
+        <h2 class="deck-heading">${escapeHtml(t('student.joinTitle'))}</h2>
         <form id="join-form" class="form">
-          <label>Код класу <input name="class_code" placeholder="DEMO01" required maxlength="10" style="text-transform:uppercase" /></label>
-          <button type="submit" class="btn btn--primary btn--block">Приєднатись</button>
+          <label>${escapeHtml(t('label.classCode'))} <input name="class_code" placeholder="DEMO01" required maxlength="10" style="text-transform:uppercase" /></label>
+          <button type="submit" class="btn btn--primary btn--block">${escapeHtml(t('btn.join'))}</button>
         </form>
         <p id="join-err" class="err"></p>
       </main>
@@ -78,14 +79,19 @@ export async function renderAssignmentDetail(root, navigate) {
   root.replaceChildren(
     el(`
       <main class="box box--wide">
-        ${headerBar(appState.user, null, `<button type="button" id="back" class="btn btn--ghost btn--sm">← Кабінет</button>`).outerHTML}
+        ${headerBar(appState.user, null, `<button type="button" id="back" class="btn btn--ghost btn--sm">${escapeHtml(t('btn.backCabinet'))}</button>`).outerHTML}
         <h2 class="deck-heading">${escapeHtml(a.title)}</h2>
-        <p class="deck-hint">${escapeHtml(a.class_title)} · ${escapeHtml(a.word_set_title)} · до ${formatDate(a.deadline)}</p>
-        <p class="hint">Статус: ${statusLabel(a.student_status)} · Карток: ${a.card_count || 0}</p>
+        <p class="deck-hint">${escapeHtml(a.class_title)} · ${escapeHtml(a.word_set_title)} · ${escapeHtml(t('teacher.deadlineUntil', { date: formatDate(a.deadline) }))}</p>
+        <p class="hint">${escapeHtml(
+          t('student.assignment.status', {
+            status: statusLabel(a.student_status),
+            count: a.card_count || 0,
+          }),
+        )}</p>
         <div class="card-actions card-actions--stack">
-          ${canStudy ? '<button type="button" id="go-study" class="btn btn--primary">Вчити слова</button>' : ''}
-          ${canStudy ? '<button type="button" id="go-review" class="btn btn--secondary">Повторити складні</button>' : ''}
-          ${canTest ? '<button type="button" id="go-test" class="btn btn--secondary">Пройти тест</button>' : ''}
+          ${canStudy ? `<button type="button" id="go-study" class="btn btn--primary">${escapeHtml(t('student.assignment.study'))}</button>` : ''}
+          ${canStudy ? `<button type="button" id="go-review" class="btn btn--secondary">${escapeHtml(t('student.assignment.review'))}</button>` : ''}
+          ${canTest ? `<button type="button" id="go-test" class="btn btn--secondary">${escapeHtml(t('student.assignment.test'))}</button>` : ''}
         </div>
       </main>
     `),
@@ -133,19 +139,19 @@ export async function renderStudy(root, navigate) {
   const idx = queue[appState.studyIndex];
   const card = appState.studyCards[idx];
   const done = !card || total === 0;
-  const heading = appState.reviewErrorsOnly ? 'Повторення помилок' : 'Вчити слова';
+  const heading = appState.reviewErrorsOnly ? t('student.study.reviewTitle') : t('student.study.title');
 
   let body;
   if (done) {
     if (total === 0) {
-      body = `<p class="study-done-msg">Немає слів для проходження.</p>
-        <button type="button" id="back-assign" class="btn btn--secondary">До завдання</button>`;
+      body = `<p class="study-done-msg">${escapeHtml(t('student.study.noWords'))}</p>
+        <button type="button" id="back-assign" class="btn btn--secondary">${escapeHtml(t('student.study.back'))}</button>`;
     } else {
       const allRight = appState.studyCorrect === total;
-      body = `<p class="study-done-msg">${allRight ? 'Набір успішно завершено!' : 'Прохід завершено.'}</p>
-        <p class="study-done-counter">Правильних: <strong>${appState.studyCorrect} / ${total}</strong></p>
-        ${allRight ? '' : '<p class="study-hint study-hint--done">Помилки можна пропрацювати через «Повторити складні».</p>'}
-        <button type="button" id="back-assign" class="btn btn--primary">До завдання</button>`;
+      body = `<p class="study-done-msg">${escapeHtml(allRight ? t('student.study.doneAll') : t('student.study.donePartial'))}</p>
+        <p class="study-done-counter">${escapeHtml(t('student.study.correctLabel'))}: <strong>${appState.studyCorrect}</strong> / <strong>${total}</strong></p>
+        ${allRight ? '' : `<p class="study-hint study-hint--done">${escapeHtml(t('student.study.reviewHint'))}</p>`}
+        <button type="button" id="back-assign" class="btn btn--primary">${escapeHtml(t('student.study.back'))}</button>`;
     }
   } else if (appState.studyChecked) {
     const correct = appState.studyLastCorrect;
@@ -155,31 +161,31 @@ export async function renderStudy(root, navigate) {
       ${card.image_url ? `<img class="card-image" src="${escapeHtml(card.image_url)}" alt="${escapeHtml(card.word)}" />` : ''}
       <p class="card-tr">${escapeHtml(card.translation)}</p>
       <p class="feedback ${correct ? 'feedback--ok' : 'feedback--bad'}">
-        ${correct ? 'Правильно!' : 'Неправильно'}
+        ${escapeHtml(correct ? t('student.study.correct') : t('student.study.incorrect'))}
       </p>
-      <p class="feedback-detail">Ваша відповідь: <strong>${escapeHtml(appState.studyTyped || '—')}</strong></p>
-      ${correct ? '' : `<p class="feedback-detail">Правильна відповідь: <strong>${escapeHtml(card.word)}</strong></p>`}
+      <p class="feedback-detail">${escapeHtml(t('student.study.yourAnswerLabel'))}: <strong>${escapeHtml(appState.studyTyped || '—')}</strong></p>
+      ${correct ? '' : `<p class="feedback-detail">${escapeHtml(t('student.study.correctAnswerLabel'))}: <strong>${escapeHtml(card.word)}</strong></p>`}
       <div class="card-actions card-actions--stack">
-        <button type="button" id="next" class="btn btn--primary">${last ? 'Завершити' : 'Далі'}</button>
+        <button type="button" id="next" class="btn btn--primary">${escapeHtml(last ? t('btn.finish') : t('btn.next'))}</button>
       </div>`;
   } else {
     body = `
       <p class="counter">${appState.studyIndex + 1} / ${total}</p>
       ${card.image_url ? `<img class="card-image" src="${escapeHtml(card.image_url)}" alt="${escapeHtml(card.word)}" />` : ''}
       <p class="card-tr">${escapeHtml(card.translation)}</p>
-      <p class="study-hint">Впишіть слово відповідно до перекладу:</p>
+      <p class="study-hint">${escapeHtml(t('student.study.prompt'))}</p>
       <form id="answer-form" class="study-answer">
         <input id="answer-input" type="text" class="study-input" autocomplete="off" autocapitalize="off"
-          spellcheck="false" placeholder="Ваша відповідь" />
-        <button type="submit" class="btn btn--primary btn--block">Перевірити</button>
+          spellcheck="false" placeholder="${escapeHtml(t('student.study.answerPlaceholder'))}" />
+        <button type="submit" class="btn btn--primary btn--block">${escapeHtml(t('btn.check'))}</button>
       </form>`;
   }
 
   root.replaceChildren(
     el(`
       <main class="box box--wide">
-        ${headerBar(appState.user, null, `<button type="button" id="back" class="btn btn--ghost btn--sm">← Завдання</button>`).outerHTML}
-        <h2 class="deck-heading">${heading}</h2>
+        ${headerBar(appState.user, null, `<button type="button" id="back" class="btn btn--ghost btn--sm">${escapeHtml(t('btn.backAssignment'))}</button>`).outerHTML}
+        <h2 class="deck-heading">${escapeHtml(heading)}</h2>
         ${body}
       </main>
     `),
@@ -263,10 +269,10 @@ export async function renderTest(root, navigate) {
   root.replaceChildren(
     el(`
       <main class="box box--wide">
-        ${headerBar(appState.user, null, `<button type="button" id="back" class="btn btn--ghost btn--sm">Скасувати</button>`).outerHTML}
-        <p class="counter">Питання ${i + 1} / ${questions.length}</p>
+        ${headerBar(appState.user, null, `<button type="button" id="back" class="btn btn--ghost btn--sm">${escapeHtml(t('btn.cancel'))}</button>`).outerHTML}
+        <p class="counter">${escapeHtml(t('student.test.question', { current: i + 1, total: questions.length }))}</p>
         <p class="card-term">${escapeHtml(q.word)}</p>
-        <p class="hint">Оберіть правильний переклад:</p>
+        <p class="hint">${escapeHtml(t('student.test.pickTranslation'))}</p>
         <div class="card-actions card-actions--stack">${opts}</div>
       </main>
     `),
@@ -298,22 +304,27 @@ export function renderTestResults(root, navigate) {
   const wrong = (r.wrong_words || [])
     .map(
       (w) =>
-        `<li>${escapeHtml(w.word)} — правильно: ${escapeHtml(w.correct_translation)}</li>`,
+        `<li>${escapeHtml(
+          t('student.testResults.wrongLine', {
+            word: w.word,
+            translation: w.correct_translation,
+          }),
+        )}</li>`,
     )
     .join('');
 
   root.replaceChildren(
     el(`
       <main class="box box--wide">
-        ${headerBar(appState.user, null, `<button type="button" id="back" class="btn btn--ghost btn--sm">← Кабінет</button>`).outerHTML}
-        <h2 class="deck-heading">Результат тесту</h2>
-        <p class="study-done-msg">Бал: <strong>${r.score}%</strong> (${r.correct_answers}/${r.total})</p>
+        ${headerBar(appState.user, null, `<button type="button" id="back" class="btn btn--ghost btn--sm">${escapeHtml(t('btn.backCabinet'))}</button>`).outerHTML}
+        <h2 class="deck-heading">${escapeHtml(t('student.testResults.title'))}</h2>
+        <p class="study-done-msg">${escapeHtml(t('student.testResults.scoreLabel'))}: <strong>${r.score}%</strong> (${r.correct_answers}/${r.total})</p>
         ${
           wrong
-            ? `<section class="deck-section"><h3 class="deck-heading">Слова для повторення</h3><ul class="sets">${wrong}</ul></section>`
-            : '<p class="hint">Усі відповіді правильні!</p>'
+            ? `<section class="deck-section"><h3 class="deck-heading">${escapeHtml(t('student.testResults.reviewWords'))}</h3><ul class="sets">${wrong}</ul></section>`
+            : `<p class="hint">${escapeHtml(t('student.testResults.allCorrect'))}</p>`
         }
-        <button type="button" id="done" class="btn btn--primary">Готово</button>
+        <button type="button" id="done" class="btn btn--primary">${escapeHtml(t('btn.done'))}</button>
       </main>
     `),
   );

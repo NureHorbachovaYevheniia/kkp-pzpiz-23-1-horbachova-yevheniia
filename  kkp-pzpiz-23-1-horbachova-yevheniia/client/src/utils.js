@@ -12,10 +12,12 @@ export function escapeHtml(s) {
     .replace(/"/g, '&quot;');
 }
 
+import { getDateLocale, t } from './i18n.js';
+
 export function formatDate(iso) {
   if (!iso) return '—';
   try {
-    return new Intl.DateTimeFormat('uk-UA', {
+    return new Intl.DateTimeFormat(getDateLocale(), {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -42,19 +44,7 @@ export function normalizeAnswer(s) {
 }
 
 export function statusLabel(status) {
-  const map = {
-    not_started: 'Не почато',
-    in_progress: 'У процесі',
-    completed: 'Завершено',
-    know: 'Знаю',
-    almost: 'Майже знаю',
-    repeat: 'Повторити',
-    active: 'Активне',
-    draft: 'Чернетка',
-    closed: 'Закрито',
-    study: 'Вивчення',
-    test: 'Тест',
-    mixed: 'Змішаний',
-  };
-  return map[status] || status;
+  const key = 'status.' + status;
+  const label = t(key);
+  return label === key ? status : label;
 }
