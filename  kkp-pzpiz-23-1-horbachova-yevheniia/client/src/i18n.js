@@ -140,6 +140,34 @@ const messages = {
     'status.study': 'Вивчення',
     'status.test': 'Тест',
     'status.mixed': 'Змішаний',
+
+    'api.forbidden': 'Недостатньо прав доступу',
+    'api.invalidClassId': 'Невірний id класу',
+    'api.classNotFound': 'Клас не знайдено',
+    'api.classCodeRequired': 'Введіть код класу',
+    'api.classCodeNotFound': 'Клас з таким кодом не знайдено',
+    'api.invalidWordSetId': 'Невірний id набору',
+    'api.wordSetNotFound': 'Набір слів не знайдено',
+    'api.setNotFound': 'Набір не знайдено',
+    'api.assignmentTitleLength': 'Назва завдання 1–200 символів',
+    'api.datesRequired': 'Вкажіть start_date і deadline (YYYY-MM-DD)',
+    'api.invalidMode': 'mode: study, test або mixed',
+    'api.invalidAssignmentId': 'Невірний id завдання',
+    'api.assignmentNotFound': 'Завдання не знайдено',
+    'api.nameLength': "Ім'я 2–100 символів",
+    'api.invalidEmail': 'Невірний email',
+    'api.passwordMin': 'Пароль мінімум 6 символів',
+    'api.invalidRole': 'Роль: teacher або student',
+    'api.emailTaken': 'Такий email вже є',
+    'api.credentialsRequired': 'Вкажіть email і пароль',
+    'api.invalidCredentials': 'Невірний email або пароль',
+    'api.wordTranslationRequired': 'Введіть слово і переклад',
+    'api.invalidCardId': 'Невірний id картки',
+    'api.cardNotFound': 'Картку не знайдено',
+    'api.noCardsForTest': 'У наборі немає карток для тесту',
+    'api.answersRequired': 'Надішліть answers[]',
+    'api.invalidWordCardId': 'Невірний word_card_id',
+    'api.invalidStatus': 'status: know, almost або repeat',
   },
   en: {
     'brand.tag': 'learning platform',
@@ -279,7 +307,72 @@ const messages = {
     'status.study': 'Study',
     'status.test': 'Test',
     'status.mixed': 'Mixed',
+
+    'api.forbidden': 'Insufficient permissions',
+    'api.invalidClassId': 'Invalid class id',
+    'api.classNotFound': 'Class not found',
+    'api.classCodeRequired': 'Enter a class code',
+    'api.classCodeNotFound': 'No class with this code',
+    'api.invalidWordSetId': 'Invalid word set id',
+    'api.wordSetNotFound': 'Word set not found',
+    'api.setNotFound': 'Set not found',
+    'api.assignmentTitleLength': 'Assignment title must be 1–200 characters',
+    'api.datesRequired': 'Provide start_date and deadline (YYYY-MM-DD)',
+    'api.invalidMode': 'mode must be study, test, or mixed',
+    'api.invalidAssignmentId': 'Invalid assignment id',
+    'api.assignmentNotFound': 'Assignment not found',
+    'api.nameLength': 'Name must be 2–100 characters',
+    'api.invalidEmail': 'Invalid email',
+    'api.passwordMin': 'Password must be at least 6 characters',
+    'api.invalidRole': 'Role must be teacher or student',
+    'api.emailTaken': 'This email is already registered',
+    'api.credentialsRequired': 'Email and password are required',
+    'api.invalidCredentials': 'Invalid email or password',
+    'api.wordTranslationRequired': 'Word and translation are required',
+    'api.invalidCardId': 'Invalid card id',
+    'api.cardNotFound': 'Card not found',
+    'api.noCardsForTest': 'No cards in the set for a test',
+    'api.answersRequired': 'Send answers[]',
+    'api.invalidWordCardId': 'Invalid word_card_id',
+    'api.invalidStatus': 'status must be know, almost, or repeat',
   },
+};
+
+/** Тексти помилок API (сервер завжди відповідає українською) → ключ у словнику */
+const API_ERROR_KEYS = {
+  'Потрібен токен': 'error.tokenRequired',
+  'Недійсний токен': 'error.tokenInvalid',
+  'Недостатньо прав доступу': 'api.forbidden',
+  'Назва класу 1–200 символів': 'teacher.err.classTitle',
+  'Невірний id класу': 'api.invalidClassId',
+  'Клас не знайдено': 'api.classNotFound',
+  'Введіть код класу': 'api.classCodeRequired',
+  'Клас з таким кодом не знайдено': 'api.classCodeNotFound',
+  'Невірний class_id': 'api.invalidClassId',
+  'Невірний word_set_id': 'api.invalidWordSetId',
+  'Назва завдання 1–200 символів': 'api.assignmentTitleLength',
+  'Вкажіть start_date і deadline (YYYY-MM-DD)': 'api.datesRequired',
+  'mode: study, test або mixed': 'api.invalidMode',
+  'Набір слів не знайдено': 'api.wordSetNotFound',
+  'Невірний id завдання': 'api.invalidAssignmentId',
+  'Завдання не знайдено': 'api.assignmentNotFound',
+  "Ім'я 2–100 символів": 'api.nameLength',
+  'Невірний email': 'api.invalidEmail',
+  'Пароль мінімум 6 символів': 'api.passwordMin',
+  'Роль: teacher або student': 'api.invalidRole',
+  'Такий email вже є': 'api.emailTaken',
+  'Вкажіть email і пароль': 'api.credentialsRequired',
+  'Невірний email або пароль': 'api.invalidCredentials',
+  'Назва набору 1–200 символів': 'teacher.err.setTitle',
+  'Невірний id набору': 'api.invalidWordSetId',
+  'Набір не знайдено': 'api.setNotFound',
+  'Введіть слово і переклад': 'api.wordTranslationRequired',
+  'Невірний id картки': 'api.invalidCardId',
+  'Картку не знайдено': 'api.cardNotFound',
+  'У наборі немає карток для тесту': 'api.noCardsForTest',
+  'Надішліть answers[]': 'api.answersRequired',
+  'Невірний word_card_id': 'api.invalidWordCardId',
+  'status: know, almost або repeat': 'api.invalidStatus',
 };
 
 let locale = 'uk';
@@ -300,6 +393,26 @@ export function t(key, vars = {}) {
     text = text.replaceAll(`{${name}}`, String(value));
   }
   return text;
+}
+
+/** Перекладає текст помилки з API відповідно до поточної мови UI */
+export function translateApiError(message) {
+  const msg = String(message ?? '');
+  if (!msg) return t('error.generic');
+  const key = API_ERROR_KEYS[msg];
+  if (key) return t(key);
+  return msg;
+}
+
+/** Чи це помилка авторизації (прострочений/відсутній токен) */
+export function isAuthTokenError(message) {
+  const msg = String(message ?? '');
+  return (
+    msg === 'Потрібен токен' ||
+    msg === 'Недійсний токен' ||
+    msg === t('error.tokenRequired') ||
+    msg === t('error.tokenInvalid')
+  );
 }
 
 export function setLocale(next) {

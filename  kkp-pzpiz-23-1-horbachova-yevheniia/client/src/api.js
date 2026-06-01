@@ -1,4 +1,6 @@
 // Тут усе для роботи з сервером: запити та збереження токена.
+import { translateApiError } from './i18n.js';
+
 const TOKEN_KEY = 'learnly_token';
 
 export async function api(path, options = {}) {
@@ -25,7 +27,7 @@ export async function api(path, options = {}) {
   // якщо сервер повернув помилку — кидаємо її далі
   if (!res.ok) {
     const msg = data && data.error ? data.error : res.statusText;
-    throw new Error(msg);
+    throw new Error(translateApiError(msg));
   }
   return data;
 }

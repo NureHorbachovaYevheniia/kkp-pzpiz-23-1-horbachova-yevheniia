@@ -2,7 +2,7 @@
 import './style.css';
 import { api, getToken, clearToken } from './api.js';
 import { appState } from './state.js';
-import { initI18n, mountLangSwitcher, onLocaleChange, updateBrandTag, t } from './i18n.js';
+import { initI18n, mountLangSwitcher, onLocaleChange, updateBrandTag, t, isAuthTokenError } from './i18n.js';
 import { renderHome, renderLogin, renderRegister, renderBrandAccount } from './screens/auth.js';
 import {
   renderTeacherDashboard,
@@ -81,12 +81,7 @@ async function render() {
     }
   } catch (e) {
     // якщо токен застарів — повертаємо на сторінку входу
-    if (
-      e.message === t('error.tokenRequired') ||
-      e.message === t('error.tokenInvalid') ||
-      e.message === 'Потрібен токен' ||
-      e.message === 'Недійсний токен'
-    ) {
+    if (isAuthTokenError(e.message)) {
       clearToken();
       appState.user = null;
       navigate('login');
