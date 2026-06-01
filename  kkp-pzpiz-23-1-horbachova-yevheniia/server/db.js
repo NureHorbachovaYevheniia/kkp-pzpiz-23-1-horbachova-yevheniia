@@ -26,6 +26,8 @@ export function initDb() {
       password_hash TEXT NOT NULL,
       role TEXT NOT NULL CHECK(role IN ('teacher', 'student')),
       token TEXT,
+      survey_language TEXT,
+      survey_level TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
@@ -106,6 +108,19 @@ export function initDb() {
     db.exec('ALTER TABLE users ADD COLUMN token TEXT');
   } catch {
     // колонка вже є, нічого не робимо
+  }
+
+  //поля з опитування при реєстрації
+  const surveyColumns = [
+    'ALTER TABLE users ADD COLUMN survey_language TEXT',
+    'ALTER TABLE users ADD COLUMN survey_level TEXT',
+  ];
+  for (const sql of surveyColumns) {
+    try {
+      db.exec(sql);
+    } catch {
+      // колонка вже є — пропускаємо
+    }
   }
 
   // прибираємо старі поля, які більше не використовуються

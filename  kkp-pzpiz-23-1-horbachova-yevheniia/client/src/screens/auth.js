@@ -117,30 +117,91 @@ export function renderRegisterRole(root, navigate) {
       </main>
     `),
   );
-  const err = root.querySelector('#role-err');
   root.querySelector('#role-back').addEventListener('click', () => navigate('register'));
   root.querySelectorAll('.role-card').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      err.textContent = '';
-      const role = btn.getAttribute('data-role');
-      const reg = appState.registerData;
-      try {
-        await api('/api/auth/register', {
-          method: 'POST',
-          body: JSON.stringify({ ...reg, role }),
-        });
-        const data = await api('/api/auth/login', {
-          method: 'POST',
-          body: JSON.stringify({ email: reg.email, password: reg.password }),
-        });
-        setToken(data.token);
-        appState.user = data.user;
-        appState.registerData = null;
-        navigate(data.user.role === 'teacher' ? 'teacher-dashboard' : 'student-dashboard');
-      } catch (e2) {
-        err.textContent = e2.message || t('error.register');
-      }
+    btn.addEventListener('click', () => {
+      // запам'ятовуємо роль і йдемо на опитування
+      appState.registerData.role = btn.getAttribute('data-role');
+      navigate('register-survey');
     });
+  });
+}
+
+export function renderRegisterSurvey(root, navigate) {
+  const reg = appState.registerData;
+  // якщо немає даних або ролі — повертаємо на попередні кроки
+  if (!reg || !reg.role) {
+    navigate('register');
+    return;
+  }
+  const isTeacher = reg.role === 'teacher';
+  // друге запитання залежить від ролі
+  const secondQuestion = isTeacher
+    ? `
+        <label>${escapeHtml(t('survey.experience'))}
+          <select name="level" required>
+            <option value="">${escapeHtml(t('survey.choose'))}</option>
+            <option value="lt1">${escapeHtml(t('survey.exp.lt1'))}</option>
+            <option value="1to3">${escapeHtml(t('survey.exp.1to3'))}</option>
+            <option value="3to5">${escapeHtml(t('survey.exp.3to5'))}</option>
+            <option value="gt5">${escapeHtml(t('survey.exp.gt5'))}</option>
+          </select>
+        </label>`
+    : `
+        <label>${escapeHtml(t('survey.level'))}
+          <select name="level" required>
+            <option value="">${escapeHtml(t('survey.choose'))}</option>
+            <option value="beginner">${escapeHtml(t('survey.level.beginner'))}</option>
+            <option value="intermediate">${escapeHtml(t('survey.level.intermediate'))}</option>
+            <option value="advanced">${escapeHtml(t('survey.level.advanced'))}</option>
+          </select>
+        </label>`;
+  root.replaceChildren(
+    el(`
+      <main class="box">
+        <h1>${escapeHtml(t('survey.title'))}</h1>
+        <p class="hint">${escapeHtml(t('survey.hint'))}</p>
+        <form id="survey-form" class="form">
+          <label>${escapeHtml(isTeacher ? t('survey.langTeacher') : t('survey.langStudent'))}
+            <input name="language" type="text" maxlength="100" placeholder="${escapeHtml(t('survey.langPlaceholder'))}" required />
+          </label>
+          ${secondQuestion}
+          <button type="submit" class="btn btn--primary btn--block">${escapeHtml(t('survey.finish'))}</button>
+        </form>
+        <p class="hint"><button type="button" id="survey-back" class="btn btn--ghost btn--sm">${escapeHtml(t('btn.back'))}</button></p>
+        <p id="survey-err" class="err" role="alert"></p>
+      </main>
+    `),
+  );
+  const err = root.querySelector('#survey-err');
+  root.querySelector('#survey-back').addEventListener('click', () => navigate('register-role'));
+  root.querySelector('#survey-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    err.textContent = '';
+    const fd = new FormData(e.target);
+    try {
+      await api('/api/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: reg.name,
+          email: reg.email,
+          password: reg.password,
+          role: reg.role,
+          survey_language: String(fd.get('language') || ''),
+          survey_level: String(fd.get('level') || ''),
+        }),
+      });
+      const data = await api('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email: reg.email, password: reg.password }),
+      });
+      setToken(data.token);
+      appState.user = data.user;
+      appState.registerData = null;
+      navigate(data.user.role === 'teacher' ? 'teacher-dashboard' : 'student-dashboard');
+    } catch (e2) {
+      err.textContent = e2.message || t('error.register');
+    }
   });
 }
 

@@ -32,6 +32,9 @@ router.post('/register', (req, res) => {
   const email = String(req.body.email || '').trim().toLowerCase();
   const password = String(req.body.password || '');
   const role = String(req.body.role || '').trim();
+  // відповіді з опитування
+  const surveyLanguage = String(req.body.survey_language || '').trim().slice(0, 100);
+  const surveyLevel = String(req.body.survey_level || '').trim().slice(0, 100);
 
   // перевіряємо дані з форми
   if (name.length < 2 || name.length > 100) {
@@ -52,8 +55,10 @@ router.post('/register', (req, res) => {
 
   try {
     const info = getDb()
-      .prepare('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)')
-      .run(name, email, password_hash, role);
+      .prepare(
+        'INSERT INTO users (name, email, password_hash, role, survey_language, survey_level) VALUES (?, ?, ?, ?, ?, ?)',
+      )
+      .run(name, email, password_hash, role, surveyLanguage, surveyLevel);
     return res.status(201).json({ id: info.lastInsertRowid, name, email, role });
   } catch (err) {
     // такий email уже зайнятий
