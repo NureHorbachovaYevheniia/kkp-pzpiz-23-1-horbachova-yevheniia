@@ -10,6 +10,7 @@ const messages = {
     'btn.login': 'Увійти',
     'btn.register': 'Реєстрація',
     'btn.logout': 'Вийти',
+    'btn.profile': 'Профіль',
     'btn.open': 'Відкрити',
     'btn.create': 'Створити',
     'btn.save': 'Зберегти',
@@ -34,6 +35,7 @@ const messages = {
 
     'error.login': 'Помилка входу',
     'error.register': 'Помилка реєстрації',
+    'error.profile': 'Помилка збереження профілю',
     'error.generic': 'Помилка',
     'error.tokenRequired': 'Потрібен токен',
     'error.tokenInvalid': 'Недійсний токен',
@@ -45,6 +47,10 @@ const messages = {
     'register.title': 'Реєстрація',
     'register.hasAccount': 'Вже є акаунт? Увійти',
     'register.submit': 'Зареєструватись',
+
+    'profile.title': 'Редагування профілю',
+    'profile.passwordLabel': 'Новий пароль',
+    'profile.passwordPlaceholder': 'залиште порожнім, якщо не змінюєте',
 
     'teacher.dashboard.title': 'Кабінет викладача',
     'teacher.dashboard.stats':
@@ -178,6 +184,7 @@ const messages = {
     'btn.login': 'Log in',
     'btn.register': 'Sign up',
     'btn.logout': 'Log out',
+    'btn.profile': 'Profile',
     'btn.open': 'Open',
     'btn.create': 'Create',
     'btn.save': 'Save',
@@ -202,6 +209,7 @@ const messages = {
 
     'error.login': 'Login failed',
     'error.register': 'Registration failed',
+    'error.profile': 'Could not save profile',
     'error.generic': 'Error',
     'error.tokenRequired': 'Token required',
     'error.tokenInvalid': 'Invalid token',
@@ -213,6 +221,10 @@ const messages = {
     'register.title': 'Sign up',
     'register.hasAccount': 'Already have an account? Log in',
     'register.submit': 'Sign up',
+
+    'profile.title': 'Edit profile',
+    'profile.passwordLabel': 'New password',
+    'profile.passwordPlaceholder': 'leave empty to keep current',
 
     'teacher.dashboard.title': 'Teacher dashboard',
     'teacher.dashboard.stats':

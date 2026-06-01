@@ -122,6 +122,58 @@ export function headerBar(user, onLogout, extra = '') {
   `);
 }
 
+function dashboardScreen(user) {
+  return user.role === 'teacher' ? 'teacher-dashboard' : 'student-dashboard';
+}
+
+export function renderProfile(root, navigate) {
+  const user = appState.user;
+  if (!user) {
+    navigate('login');
+    return;
+  }
+  const back = dashboardScreen(user);
+  root.replaceChildren(
+    el(`
+      <main class="box">
+        ${headerBar(user, null, `<button type="button" id="back" class="btn btn--ghost btn--sm">${escapeHtml(t('btn.backCabinet'))}</button>`).outerHTML}
+        <h1>${escapeHtml(t('profile.title'))}</h1>
+        <p class="hint">${escapeHtml(user.role === 'teacher' ? t('role.teacher') : t('role.student'))}</p>
+        <form id="profile-form" class="form">
+          <label>${escapeHtml(t('label.name'))} <input name="name" type="text" required maxlength="100" value="${escapeHtml(user.name)}" /></label>
+          <label>${escapeHtml(t('label.email'))} <input name="email" type="email" autocomplete="username" required value="${escapeHtml(user.email)}" /></label>
+          <label>${escapeHtml(t('profile.passwordLabel'))} <input name="password" type="password" autocomplete="new-password" minlength="6" placeholder="${escapeHtml(t('profile.passwordPlaceholder'))}" /></label>
+          <button type="submit" class="btn btn--primary btn--block">${escapeHtml(t('btn.save'))}</button>
+        </form>
+        <p id="profile-err" class="err" role="alert"></p>
+      </main>
+    `),
+  );
+  bindLogout(root, navigate);
+  root.querySelector('#back').addEventListener('click', () => navigate(back));
+  const err = root.querySelector('#profile-err');
+  root.querySelector('#profile-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    err.textContent = '';
+    const fd = new FormData(e.target);
+    const body = {
+      name: String(fd.get('name') || ''),
+      email: String(fd.get('email') || ''),
+    };
+    const password = String(fd.get('password') || '');
+    if (password) body.password = password;
+    try {
+      appState.user = await api('/api/auth/me', {
+        method: 'PUT',
+        body: JSON.stringify(body),
+      });
+      navigate(back);
+    } catch (e2) {
+      err.textContent = e2.message || t('error.profile');
+    }
+  });
+}
+
 export function renderBrandAccount(user, navigate) {
   const slot = document.querySelector('#brand-account');
   if (!slot) return;
@@ -129,18 +181,15 @@ export function renderBrandAccount(user, navigate) {
     slot.replaceChildren();
     return;
   }
-  const roleLabel = user.role === 'teacher' ? t('role.teacher') : t('role.student');
   slot.replaceChildren(
     el(`
       <div class="brand__account-inner">
-        <div class="brand__user">
-          <span class="brand__name">${escapeHtml(user.name)}</span>
-          <span class="brand__role">${escapeHtml(roleLabel)} · ${escapeHtml(user.email)}</span>
-        </div>
+        <button type="button" id="brand-profile" class="btn btn--ghost btn--sm">${escapeHtml(t('btn.profile'))}</button>
         <button type="button" id="brand-logout" class="btn brand__logout btn--sm">${escapeHtml(t('btn.logout'))}</button>
       </div>
     `),
   );
+  slot.querySelector('#brand-profile').addEventListener('click', () => navigate('profile'));
   slot.querySelector('#brand-logout').addEventListener('click', () => {
     logout();
     appState.user = null;

@@ -102,4 +102,46 @@ router.get('/me', requireAuth, (req, res) => {
   });
 });
 
+// оновлення профілю (ім'я, email, пароль — за бажанням)
+router.put('/me', requireAuth, (req, res) => {
+  const name = String(req.body.name || '').trim();
+  const email = String(req.body.email || '').trim().toLowerCase();
+  const password = String(req.body.password || '');
+
+  if (name.length < 2 || name.length > 100) {
+    return res.status(400).json({ error: 'Ім\'я 2–100 символів' });
+  }
+  if (!email.includes('@') || email.length < 4) {
+    return res.status(400).json({ error: 'Невірний email' });
+  }
+  if (password && password.length < 6) {
+    return res.status(400).json({ error: 'Пароль мінімум 6 символів' });
+  }
+
+  try {
+    if (password) {
+      const password_hash = bcrypt.hashSync(password, 10);
+      getDb()
+        .prepare('UPDATE users SET name = ?, email = ?, password_hash = ? WHERE id = ?')
+        .run(name, email, password_hash, req.user.id);
+    } else {
+      getDb()
+        .prepare('UPDATE users SET name = ?, email = ? WHERE id = ?')
+        .run(name, email, req.user.id);
+    }
+  } catch (err) {
+    if (err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
+      return res.status(409).json({ error: 'Такий email вже є' });
+    }
+    throw err;
+  }
+
+  return res.json({
+    id: req.user.id,
+    name,
+    email,
+    role: req.user.role,
+  });
+});
+
 export default router;

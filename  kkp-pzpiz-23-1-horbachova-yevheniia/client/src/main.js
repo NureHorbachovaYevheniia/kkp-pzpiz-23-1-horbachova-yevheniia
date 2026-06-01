@@ -3,7 +3,13 @@ import './style.css';
 import { api, getToken, clearToken } from './api.js';
 import { appState } from './state.js';
 import { initI18n, mountLangSwitcher, onLocaleChange, updateBrandTag, t, isAuthTokenError } from './i18n.js';
-import { renderHome, renderLogin, renderRegister, renderBrandAccount } from './screens/auth.js';
+import {
+  renderHome,
+  renderLogin,
+  renderRegister,
+  renderProfile,
+  renderBrandAccount,
+} from './screens/auth.js';
 import {
   renderTeacherDashboard,
   renderTeacherClass,
@@ -42,6 +48,9 @@ async function render() {
         break;
       case 'register':
         renderRegister(root, navigate);
+        break;
+      case 'profile':
+        renderProfile(root, navigate);
         break;
       case 'teacher-dashboard':
         await renderTeacherDashboard(root, navigate);
