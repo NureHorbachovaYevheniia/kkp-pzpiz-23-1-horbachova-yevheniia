@@ -1,0 +1,63 @@
+{
+  "categoryTitle": "Фрукти та овочі",
+  "sets": [
+    {
+      "title": "Фрукти",
+      "words": [
+        { "term": "apple", "translation": "яблуко" },
+        { "term": "pear", "translation": "груша" },
+        { "term": "plum", "translation": "слива" },
+        { "term": "cherry", "translation": "вишня" },
+        { "term": "grape", "translation": "виноград" },
+        { "term": "banana", "translation": "банан" },
+        { "term": "orange", "translation": "апельсин" },
+        { "term": "lemon", "translation": "лимон" },
+        { "term": "lime", "translation": "лайм" },
+        { "term": "peach", "translation": "персик" },
+        { "term": "apricot", "translation": "абрикос" },
+        { "term": "mango", "translation": "манго" },
+        { "term": "pineapple", "translation": "ананас" },
+        { "term": "watermelon", "translation": "кавун" },
+        { "term": "melon", "translation": "диня" },
+        { "term": "strawberry", "translation": "полуниця" },
+        { "term": "raspberry", "translation": "малина" },
+        { "term": "blueberry", "translation": "лохина" },
+        { "term": "kiwi", "translation": "ківі" },
+        { "term": "coconut", "translation": "кокос" },
+        { "term": "avocado", "translation": "авокадо" },
+        { "term": "pomegranate", "translation": "гранат" },
+        { "term": "fig", "translation": "інжир" },
+        { "term": "date", "translation": "фінік" }
+      ]
+    },
+    {
+      "title": "Овочі",
+      "words": [
+        { "term": "tomato", "translation": "помідор" },
+        { "term": "cucumber", "translation": "огірок" },
+        { "term": "potato", "translation": "картопля" },
+        { "term": "carrot", "translation": "морква" },
+        { "term": "onion", "translation": "цибуля" },
+        { "term": "garlic", "translation": "часник" },
+        { "term": "pepper", "translation": "перець" },
+        { "term": "lettuce", "translation": "салат (латук)" },
+        { "term": "cabbage", "translation": "капуста" },
+        { "term": "broccoli", "translation": "броколі" },
+        { "term": "cauliflower", "translation": "цвітна капуста" },
+        { "term": "spinach", "translation": "шпинат" },
+        { "term": "eggplant", "translation": "баклажан" },
+        { "term": "zucchini", "translation": "цукіні" },
+        { "term": "beet", "translation": "буряк" },
+        { "term": "corn", "translation": "кукурудза" },
+        { "term": "peas", "translation": "горошок" },
+        { "term": "beans", "translation": "квасоля" },
+        { "term": "celery", "translation": "селера" },
+        { "term": "radish", "translation": "редиска" },
+        { "term": "pumpkin", "translation": "гарбуз" },
+        { "term": "turnip", "translation": "ріпа" },
+        { "term": "leek", "translation": "порей" },
+        { "term": "asparagus", "translation": "спаржа" }
+      ]
+    }
+  ]
+}

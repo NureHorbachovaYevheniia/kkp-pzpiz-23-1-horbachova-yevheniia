@@ -1,0 +1,16 @@
+{
+  "name": "learnly-server",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "seed:users": "node seed-accounts.js"
+  },
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "better-sqlite3": "^11.8.1",
+    "express": "^4.21.2"
+  }
+}

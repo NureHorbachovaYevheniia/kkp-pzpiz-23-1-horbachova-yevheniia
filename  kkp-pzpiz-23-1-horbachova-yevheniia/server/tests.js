@@ -1,0 +1,139 @@
+// Тест: учень обирає правильний переклад з 4 варіантів.
+import { Router } from 'express';
+import { getDb } from './db.js';
+import { requireAuth } from './auth.js';
+import { requireStudent } from './middleware.js';
+import { getAssignmentById, canAccessAssignment, shuffleArray } from './helpers.js';
+
+const router = Router();
+
+// будуємо одне питання: правильний переклад + 3 неправильні варіанти
+function buildQuestion(card, allCards) {
+  const distractors = shuffleArray(
+    allCards.filter((c) => c.id !== card.id).map((c) => c.translation),
+  ).slice(0, 3);
+
+  while (distractors.length < 3) {
+    distractors.push(`— ${distractors.length + 1}`);
+  }
+
+  const options = shuffleArray([card.translation, ...distractors.slice(0, 3)]);
+  return {
+    word_card_id: card.id,
+    word: card.word,
+    image_url: card.image_url,
+    options,
+  };
+}
+
+// створюємо тест зі списком питань
+router.get('/assignments/:id/test', requireAuth, requireStudent, (req, res) => {
+  const assignmentId = Number(req.params.id);
+  if (!Number.isInteger(assignmentId) || assignmentId < 1) {
+    return res.status(400).json({ error: 'Невірний id завдання' });
+  }
+
+  const assignment = getAssignmentById(assignmentId);
+  if (!canAccessAssignment(req.user, assignment)) {
+    return res.status(404).json({ error: 'Завдання не знайдено' });
+  }
+
+  const db = getDb();
+  const cards = db
+    .prepare('SELECT * FROM word_cards WHERE word_set_id = ? ORDER BY id')
+    .all(assignment.word_set_id);
+
+  if (cards.length < 1) {
+    return res.status(400).json({ error: 'У наборі немає карток для тесту' });
+  }
+
+  const questions = shuffleArray(cards).map((card) => buildQuestion(card, cards));
+
+  return res.json({
+    assignment_id: assignmentId,
+    title: assignment.title,
+    questions,
+  });
+});
+
+// приймаємо відповіді учня, рахуємо бал і зберігаємо результат
+router.post('/assignments/:id/test/submit', requireAuth, requireStudent, (req, res) => {
+  const assignmentId = Number(req.params.id);
+  if (!Number.isInteger(assignmentId) || assignmentId < 1) {
+    return res.status(400).json({ error: 'Невірний id завдання' });
+  }
+
+  const assignment = getAssignmentById(assignmentId);
+  if (!canAccessAssignment(req.user, assignment)) {
+    return res.status(404).json({ error: 'Завдання не знайдено' });
+  }
+
+  const answers = Array.isArray(req.body.answers) ? req.body.answers : [];
+  if (answers.length < 1) {
+    return res.status(400).json({ error: 'Надішліть answers[]' });
+  }
+
+  const db = getDb();
+  const cards = db
+    .prepare('SELECT id, word, translation FROM word_cards WHERE word_set_id = ?')
+    .all(assignment.word_set_id);
+  const byId = new Map(cards.map((c) => [c.id, c]));
+
+  let correct = 0;
+  const wrongWords = [];
+
+  const upsertProgress = db.prepare(
+    `INSERT INTO word_progress (student_id, word_card_id, assignment_id, status, correct_count, wrong_count, last_reviewed_at)
+     VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
+     ON CONFLICT(student_id, word_card_id, assignment_id) DO UPDATE SET
+       status = excluded.status,
+       correct_count = word_progress.correct_count + excluded.correct_count,
+       wrong_count = word_progress.wrong_count + excluded.wrong_count,
+       last_reviewed_at = datetime('now')`,
+  );
+
+  const tx = db.transaction(() => {
+    for (const ans of answers) {
+      const cardId = Number(ans.word_card_id);
+      const selected = String(ans.selected_translation || '').trim();
+      const card = byId.get(cardId);
+      if (!card) continue;
+
+      const isCorrect = selected === card.translation;
+      if (isCorrect) {
+        correct += 1;
+        upsertProgress.run(req.user.id, cardId, assignmentId, 'know', 1, 0);
+      } else {
+        wrongWords.push({
+          word_card_id: card.id,
+          word: card.word,
+          correct_translation: card.translation,
+          selected_translation: selected,
+        });
+        upsertProgress.run(req.user.id, cardId, assignmentId, 'repeat', 0, 1);
+      }
+    }
+
+    const total = answers.length;
+    const wrong = total - correct;
+    const score = total > 0 ? Math.round((correct / total) * 100) : 0;
+
+    db.prepare(
+      `INSERT INTO test_results (assignment_id, student_id, score, total_words, correct_answers, wrong_answers)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+    ).run(assignmentId, req.user.id, score, total, correct, wrong);
+
+    return { score, total, correct, wrong, wrongWords };
+  });
+
+  const result = tx();
+  return res.json({
+    score: result.score,
+    total: result.total,
+    correct_answers: result.correct,
+    wrong_answers: result.wrong,
+    wrong_words: result.wrongWords,
+  });
+});
+
+export default router;

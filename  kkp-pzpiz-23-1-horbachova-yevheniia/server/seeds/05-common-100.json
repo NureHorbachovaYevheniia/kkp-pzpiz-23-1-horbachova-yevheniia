@@ -1,0 +1,410 @@
+{
+  "categoryTitle": "100 поширених слів",
+  "sets": [
+    {
+      "title": "Частотна лексика (англ. → укр.)",
+      "words": [
+        {
+          "term": "time",
+          "translation": "час"
+        },
+        {
+          "term": "year",
+          "translation": "рік"
+        },
+        {
+          "term": "people",
+          "translation": "люди"
+        },
+        {
+          "term": "way",
+          "translation": "шлях"
+        },
+        {
+          "term": "day",
+          "translation": "день"
+        },
+        {
+          "term": "thing",
+          "translation": "річ"
+        },
+        {
+          "term": "man",
+          "translation": "чоловік"
+        },
+        {
+          "term": "world",
+          "translation": "світ"
+        },
+        {
+          "term": "life",
+          "translation": "життя"
+        },
+        {
+          "term": "hand",
+          "translation": "рука"
+        },
+        {
+          "term": "part",
+          "translation": "частина"
+        },
+        {
+          "term": "child",
+          "translation": "дитина"
+        },
+        {
+          "term": "eye",
+          "translation": "око"
+        },
+        {
+          "term": "woman",
+          "translation": "жінка"
+        },
+        {
+          "term": "place",
+          "translation": "місце"
+        },
+        {
+          "term": "work",
+          "translation": "робота"
+        },
+        {
+          "term": "week",
+          "translation": "тиждень"
+        },
+        {
+          "term": "case",
+          "translation": "випадок"
+        },
+        {
+          "term": "point",
+          "translation": "точка"
+        },
+        {
+          "term": "government",
+          "translation": "уряд"
+        },
+        {
+          "term": "number",
+          "translation": "число"
+        },
+        {
+          "term": "group",
+          "translation": "група"
+        },
+        {
+          "term": "problem",
+          "translation": "проблема"
+        },
+        {
+          "term": "fact",
+          "translation": "факт"
+        },
+        {
+          "term": "money",
+          "translation": "гроші"
+        },
+        {
+          "term": "story",
+          "translation": "історія"
+        },
+        {
+          "term": "month",
+          "translation": "місяць"
+        },
+        {
+          "term": "lot",
+          "translation": "багато"
+        },
+        {
+          "term": "right",
+          "translation": "право"
+        },
+        {
+          "term": "study",
+          "translation": "навчання"
+        },
+        {
+          "term": "book",
+          "translation": "книга"
+        },
+        {
+          "term": "job",
+          "translation": "посада"
+        },
+        {
+          "term": "word",
+          "translation": "слово"
+        },
+        {
+          "term": "business",
+          "translation": "бізнес"
+        },
+        {
+          "term": "issue",
+          "translation": "питання"
+        },
+        {
+          "term": "side",
+          "translation": "бік"
+        },
+        {
+          "term": "kind",
+          "translation": "вид"
+        },
+        {
+          "term": "head",
+          "translation": "голова"
+        },
+        {
+          "term": "house",
+          "translation": "будинок"
+        },
+        {
+          "term": "service",
+          "translation": "послуга"
+        },
+        {
+          "term": "friend",
+          "translation": "друг"
+        },
+        {
+          "term": "father",
+          "translation": "батько"
+        },
+        {
+          "term": "power",
+          "translation": "влада"
+        },
+        {
+          "term": "hour",
+          "translation": "година"
+        },
+        {
+          "term": "game",
+          "translation": "гра"
+        },
+        {
+          "term": "line",
+          "translation": "лінія"
+        },
+        {
+          "term": "end",
+          "translation": "кінець"
+        },
+        {
+          "term": "member",
+          "translation": "учасник"
+        },
+        {
+          "term": "law",
+          "translation": "закон"
+        },
+        {
+          "term": "car",
+          "translation": "автомобіль"
+        },
+        {
+          "term": "city",
+          "translation": "місто"
+        },
+        {
+          "term": "community",
+          "translation": "громада"
+        },
+        {
+          "term": "name",
+          "translation": "ім'я"
+        },
+        {
+          "term": "president",
+          "translation": "президент"
+        },
+        {
+          "term": "team",
+          "translation": "команда"
+        },
+        {
+          "term": "minute",
+          "translation": "хвилина"
+        },
+        {
+          "term": "idea",
+          "translation": "ідея"
+        },
+        {
+          "term": "kid",
+          "translation": "дитина"
+        },
+        {
+          "term": "body",
+          "translation": "тіло"
+        },
+        {
+          "term": "information",
+          "translation": "інформація"
+        },
+        {
+          "term": "morning",
+          "translation": "ранок"
+        },
+        {
+          "term": "parent",
+          "translation": "батько чи мати"
+        },
+        {
+          "term": "face",
+          "translation": "обличчя"
+        },
+        {
+          "term": "level",
+          "translation": "рівень"
+        },
+        {
+          "term": "office",
+          "translation": "офіс"
+        },
+        {
+          "term": "door",
+          "translation": "двері"
+        },
+        {
+          "term": "health",
+          "translation": "здоров'я"
+        },
+        {
+          "term": "person",
+          "translation": "особа"
+        },
+        {
+          "term": "art",
+          "translation": "мистецтво"
+        },
+        {
+          "term": "war",
+          "translation": "війна"
+        },
+        {
+          "term": "history",
+          "translation": "історія"
+        },
+        {
+          "term": "party",
+          "translation": "вечірка"
+        },
+        {
+          "term": "result",
+          "translation": "результат"
+        },
+        {
+          "term": "change",
+          "translation": "зміна"
+        },
+        {
+          "term": "reason",
+          "translation": "причина"
+        },
+        {
+          "term": "research",
+          "translation": "дослідження"
+        },
+        {
+          "term": "girl",
+          "translation": "дівчина"
+        },
+        {
+          "term": "guy",
+          "translation": "хлопець"
+        },
+        {
+          "term": "moment",
+          "translation": "момент"
+        },
+        {
+          "term": "air",
+          "translation": "повітря"
+        },
+        {
+          "term": "teacher",
+          "translation": "вчитель"
+        },
+        {
+          "term": "force",
+          "translation": "сила"
+        },
+        {
+          "term": "education",
+          "translation": "освіта"
+        },
+        {
+          "term": "foot",
+          "translation": "ступня"
+        },
+        {
+          "term": "boy",
+          "translation": "хлопчик"
+        },
+        {
+          "term": "age",
+          "translation": "вік"
+        },
+        {
+          "term": "policy",
+          "translation": "політика"
+        },
+        {
+          "term": "music",
+          "translation": "музика"
+        },
+        {
+          "term": "rate",
+          "translation": "ставка"
+        },
+        {
+          "term": "form",
+          "translation": "форма"
+        },
+        {
+          "term": "death",
+          "translation": "смерть"
+        },
+        {
+          "term": "experience",
+          "translation": "досвід"
+        },
+        {
+          "term": "school",
+          "translation": "школа"
+        },
+        {
+          "term": "sort",
+          "translation": "вид"
+        },
+        {
+          "term": "knowledge",
+          "translation": "знання"
+        },
+        {
+          "term": "town",
+          "translation": "містечко"
+        },
+        {
+          "term": "course",
+          "translation": "курс"
+        },
+        {
+          "term": "society",
+          "translation": "суспільство"
+        },
+        {
+          "term": "interest",
+          "translation": "інтерес"
+        },
+        {
+          "term": "food",
+          "translation": "їжа"
+        }
+      ]
+    }
+  ]
+}

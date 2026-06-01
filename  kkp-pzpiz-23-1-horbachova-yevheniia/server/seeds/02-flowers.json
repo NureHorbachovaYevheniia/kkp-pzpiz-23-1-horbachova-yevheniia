@@ -1,0 +1,35 @@
+{
+  "categoryTitle": "Квіти",
+  "sets": [
+    {
+      "title": "Поширені квіти (англ. → укр.)",
+      "words": [
+        { "term": "rose", "translation": "троянда" },
+        { "term": "tulip", "translation": "тюльпан" },
+        { "term": "daisy", "translation": "маргаритка" },
+        { "term": "lily", "translation": "лілія" },
+        { "term": "sunflower", "translation": "соняшник" },
+        { "term": "orchid", "translation": "орхідея" },
+        { "term": "peony", "translation": "півонія" },
+        { "term": "iris", "translation": "півники" },
+        { "term": "lavender", "translation": "лаванда" },
+        { "term": "chrysanthemum", "translation": "хризантема" },
+        { "term": "daffodil", "translation": "нарцис" },
+        { "term": "violet", "translation": "фіалка" },
+        { "term": "jasmine", "translation": "жасмин" },
+        { "term": "marigold", "translation": "чорнобривці" },
+        { "term": "poppy", "translation": "мак" },
+        { "term": "carnation", "translation": "гвоздика" },
+        { "term": "hydrangea", "translation": "гортензія" },
+        { "term": "hibiscus", "translation": "гібіскус" },
+        { "term": "azalea", "translation": "азалія" },
+        { "term": "begonia", "translation": "бегонія" },
+        { "term": "camellia", "translation": "камелія" },
+        { "term": "geranium", "translation": "герань" },
+        { "term": "petunia", "translation": "петунія" },
+        { "term": "zinnia", "translation": "цинія" },
+        { "term": "cosmos", "translation": "космос (квітка)" }
+      ]
+    }
+  ]
+}

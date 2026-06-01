@@ -1,0 +1,105 @@
+import { Router } from 'express';
+import bcrypt from 'bcrypt';
+import { getDb } from './db.js';
+
+const router = Router();
+
+// генеруємо випадковий токен
+function makeToken() {
+  return Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
+
+// перевіряємо токен з заголовка і знаходимо користувача в базі
+export function requireAuth(req, res, next) {
+  const header = req.headers.authorization || '';
+  const token = header.replace('Bearer ', '').trim();
+  if (!token) {
+    return res.status(401).json({ error: 'Потрібен токен' });
+  }
+  const user = getDb()
+    .prepare('SELECT id, name, email, role FROM users WHERE token = ?')
+    .get(token);
+  if (!user) {
+    return res.status(401).json({ error: 'Недійсний токен' });
+  }
+  req.user = user;
+  next();
+}
+
+// реєстрація нового користувача
+router.post('/register', (req, res) => {
+  const name = String(req.body.name || '').trim();
+  const email = String(req.body.email || '').trim().toLowerCase();
+  const password = String(req.body.password || '');
+  const role = String(req.body.role || '').trim();
+
+  // перевіряємо дані з форми
+  if (name.length < 2 || name.length > 100) {
+    return res.status(400).json({ error: 'Ім\'я 2–100 символів' });
+  }
+  if (!email.includes('@') || email.length < 4) {
+    return res.status(400).json({ error: 'Невірний email' });
+  }
+  if (password.length < 6) {
+    return res.status(400).json({ error: 'Пароль мінімум 6 символів' });
+  }
+  if (role !== 'teacher' && role !== 'student') {
+    return res.status(400).json({ error: 'Роль: teacher або student' });
+  }
+
+  // хешуємо пароль
+  const password_hash = bcrypt.hashSync(password, 10);
+
+  try {
+    const info = getDb()
+      .prepare('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)')
+      .run(name, email, password_hash, role);
+    return res.status(201).json({ id: info.lastInsertRowid, name, email, role });
+  } catch (err) {
+    // такий email уже зайнятий
+    if (err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
+      return res.status(409).json({ error: 'Такий email вже є' });
+    }
+    throw err;
+  }
+});
+
+// вхід: перевіряємо пароль і видаємо токен
+router.post('/login', (req, res) => {
+  const email = String(req.body.email || '').trim().toLowerCase();
+  const password = String(req.body.password || '');
+
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Вкажіть email і пароль' });
+  }
+
+  const user = getDb()
+    .prepare('SELECT id, name, email, role, password_hash FROM users WHERE email = ?')
+    .get(email);
+
+  // якщо користувача немає або пароль не збігається
+  if (!user || !bcrypt.compareSync(password, user.password_hash)) {
+    return res.status(401).json({ error: 'Невірний email або пароль' });
+  }
+
+  // створюємо новий токен і зберігаємо його в базі
+  const token = makeToken();
+  getDb().prepare('UPDATE users SET token = ? WHERE id = ?').run(token, user.id);
+
+  return res.json({
+    token,
+    user: { id: user.id, name: user.name, email: user.email, role: user.role },
+  });
+});
+
+// повертає дані поточного користувача
+router.get('/me', requireAuth, (req, res) => {
+  return res.json({
+    id: req.user.id,
+    name: req.user.name,
+    email: req.user.email,
+    role: req.user.role,
+  });
+});
+
+export default router;
