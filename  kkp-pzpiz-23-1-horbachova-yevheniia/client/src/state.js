@@ -17,6 +17,7 @@ export const appState = {
   testAnswers: null,
   testIndex: 0,
   testResults: null,
+  registerData: null,
 };
 
 export function resetStudyState() {

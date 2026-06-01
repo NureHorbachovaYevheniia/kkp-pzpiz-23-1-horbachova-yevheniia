@@ -19,6 +19,7 @@ const messages = {
     'btn.backAssignment': '← Завдання',
     'btn.join': 'Приєднатись',
     'btn.next': 'Далі',
+    'btn.back': 'Назад',
     'btn.finish': 'Завершити',
     'btn.check': 'Перевірити',
     'btn.done': 'Готово',
@@ -47,6 +48,8 @@ const messages = {
     'register.title': 'Реєстрація',
     'register.hasAccount': 'Вже є акаунт? Увійти',
     'register.submit': 'Зареєструватись',
+    'register.roleTitle': 'Хто ви?',
+    'register.roleHint': 'Оберіть свою роль, щоб завершити реєстрацію.',
 
     'profile.title': 'Редагування профілю',
     'profile.passwordLabel': 'Новий пароль',
@@ -193,6 +196,7 @@ const messages = {
     'btn.backAssignment': '← Assignment',
     'btn.join': 'Join',
     'btn.next': 'Next',
+    'btn.back': 'Back',
     'btn.finish': 'Finish',
     'btn.check': 'Check',
     'btn.done': 'Done',
@@ -221,6 +225,8 @@ const messages = {
     'register.title': 'Sign up',
     'register.hasAccount': 'Already have an account? Log in',
     'register.submit': 'Sign up',
+    'register.roleTitle': 'Who are you?',
+    'register.roleHint': 'Choose your role to finish registration.',
 
     'profile.title': 'Edit profile',
     'profile.passwordLabel': 'New password',

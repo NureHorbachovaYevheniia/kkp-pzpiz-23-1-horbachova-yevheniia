@@ -59,21 +59,16 @@ export function renderLogin(root, navigate) {
 }
 
 export function renderRegister(root, navigate) {
+  const saved = appState.registerData || {};
   root.replaceChildren(
     el(`
       <main class="box">
         <h1>${escapeHtml(t('register.title'))}</h1>
         <form id="register-form" class="form">
-          <label>${escapeHtml(t('label.name'))} <input name="name" type="text" required maxlength="100" /></label>
-          <label>${escapeHtml(t('label.email'))} <input name="email" type="email" autocomplete="username" required /></label>
-          <label>${escapeHtml(t('label.password'))} <input name="password" type="password" autocomplete="new-password" required minlength="6" /></label>
-          <label>${escapeHtml(t('label.role'))}
-            <select name="role" required>
-              <option value="student">${escapeHtml(t('role.student'))}</option>
-              <option value="teacher">${escapeHtml(t('role.teacher'))}</option>
-            </select>
-          </label>
-          <button type="submit" class="btn btn--primary btn--block">${escapeHtml(t('register.submit'))}</button>
+          <label>${escapeHtml(t('label.name'))} <input name="name" type="text" required maxlength="100" value="${escapeHtml(saved.name || '')}" /></label>
+          <label>${escapeHtml(t('label.email'))} <input name="email" type="email" autocomplete="username" required value="${escapeHtml(saved.email || '')}" /></label>
+          <label>${escapeHtml(t('label.password'))} <input name="password" type="password" autocomplete="new-password" required minlength="6" value="${escapeHtml(saved.password || '')}" /></label>
+          <button type="submit" class="btn btn--primary btn--block">${escapeHtml(t('btn.next'))}</button>
         </form>
         <p class="hint"><button type="button" id="to-login" class="btn btn--ghost btn--sm">${escapeHtml(t('register.hasAccount'))}</button></p>
         <p id="reg-err" class="err" role="alert"></p>
@@ -82,33 +77,70 @@ export function renderRegister(root, navigate) {
   );
   const err = root.querySelector('#reg-err');
   root.querySelector('#to-login').addEventListener('click', () => navigate('login'));
-  root.querySelector('#register-form').addEventListener('submit', async (e) => {
+  root.querySelector('#register-form').addEventListener('submit', (e) => {
     e.preventDefault();
     err.textContent = '';
     const fd = new FormData(e.target);
-    try {
-      await api('/api/auth/register', {
-        method: 'POST',
-        body: JSON.stringify({
-          name: String(fd.get('name') || ''),
-          email: String(fd.get('email') || ''),
-          password: String(fd.get('password') || ''),
-          role: String(fd.get('role') || 'student'),
-        }),
-      });
-      const data = await api('/api/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({
-          email: String(fd.get('email') || ''),
-          password: String(fd.get('password') || ''),
-        }),
-      });
-      setToken(data.token);
-      appState.user = data.user;
-      navigate(data.user.role === 'teacher' ? 'teacher-dashboard' : 'student-dashboard');
-    } catch (e2) {
-      err.textContent = e2.message || t('error.register');
-    }
+    // зберігаємо дані форми і йдемо на вибір ролі
+    appState.registerData = {
+      name: String(fd.get('name') || ''),
+      email: String(fd.get('email') || ''),
+      password: String(fd.get('password') || ''),
+    };
+    navigate('register-role');
+  });
+}
+
+export function renderRegisterRole(root, navigate) {
+  // якщо немає даних форми — повертаємо на перший крок
+  if (!appState.registerData) {
+    navigate('register');
+    return;
+  }
+  root.replaceChildren(
+    el(`
+      <main class="box">
+        <h1>${escapeHtml(t('register.roleTitle'))}</h1>
+        <p class="hint">${escapeHtml(t('register.roleHint'))}</p>
+        <div class="role-choice">
+          <button type="button" class="role-card" data-role="student">
+            <span class="role-card__icon">🎒</span>
+            <span class="role-card__label">${escapeHtml(t('role.student'))}</span>
+          </button>
+          <button type="button" class="role-card" data-role="teacher">
+            <span class="role-card__icon">🎓</span>
+            <span class="role-card__label">${escapeHtml(t('role.teacher'))}</span>
+          </button>
+        </div>
+        <p class="hint"><button type="button" id="role-back" class="btn btn--ghost btn--sm">${escapeHtml(t('btn.back'))}</button></p>
+        <p id="role-err" class="err" role="alert"></p>
+      </main>
+    `),
+  );
+  const err = root.querySelector('#role-err');
+  root.querySelector('#role-back').addEventListener('click', () => navigate('register'));
+  root.querySelectorAll('.role-card').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      err.textContent = '';
+      const role = btn.getAttribute('data-role');
+      const reg = appState.registerData;
+      try {
+        await api('/api/auth/register', {
+          method: 'POST',
+          body: JSON.stringify({ ...reg, role }),
+        });
+        const data = await api('/api/auth/login', {
+          method: 'POST',
+          body: JSON.stringify({ email: reg.email, password: reg.password }),
+        });
+        setToken(data.token);
+        appState.user = data.user;
+        appState.registerData = null;
+        navigate(data.user.role === 'teacher' ? 'teacher-dashboard' : 'student-dashboard');
+      } catch (e2) {
+        err.textContent = e2.message || t('error.register');
+      }
+    });
   });
 }
 

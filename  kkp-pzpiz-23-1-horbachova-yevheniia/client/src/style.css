@@ -278,6 +278,45 @@ h1 {
   width: 100%;
 }
 
+/* ——— вибір ролі при реєстрації ——— */
+.role-choice {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.role-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1.75rem 1rem;
+  font-family: inherit;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--surface);
+  border: 2px solid var(--line-strong);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, transform 0.1s;
+}
+
+.role-card:hover {
+  border-color: var(--orange);
+  background: var(--surface-2);
+}
+
+.role-card:active {
+  transform: scale(0.98);
+}
+
+.role-card__icon {
+  font-size: 2.5rem;
+  line-height: 1;
+}
+
 .err {
   min-height: 1.2rem;
   margin: 0.85rem 0 0;

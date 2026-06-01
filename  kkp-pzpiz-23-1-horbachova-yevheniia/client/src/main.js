@@ -7,6 +7,7 @@ import {
   renderHome,
   renderLogin,
   renderRegister,
+  renderRegisterRole,
   renderProfile,
   renderBrandAccount,
 } from './screens/auth.js';
@@ -48,6 +49,9 @@ async function render() {
         break;
       case 'register':
         renderRegister(root, navigate);
+        break;
+      case 'register-role':
+        renderRegisterRole(root, navigate);
         break;
       case 'profile':
         renderProfile(root, navigate);
