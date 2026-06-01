@@ -149,4 +149,10 @@ router.put('/me', requireAuth, (req, res) => {
   });
 });
 
+// видалення власного акаунта
+router.delete('/me', requireAuth, (req, res) => {
+  getDb().prepare('DELETE FROM users WHERE id = ?').run(req.user.id);
+  return res.json({ ok: true });
+});
+
 export default router;

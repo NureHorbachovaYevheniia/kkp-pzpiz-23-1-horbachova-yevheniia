@@ -239,6 +239,11 @@ export function renderProfile(root, navigate) {
           <button type="submit" class="btn btn--primary btn--block">${escapeHtml(t('btn.save'))}</button>
         </form>
         <p id="profile-err" class="err" role="alert"></p>
+        <section class="danger-zone">
+          <p class="danger-zone__hint">${escapeHtml(t('profile.deleteHint'))}</p>
+          <button type="button" id="delete-account" class="btn btn--danger btn--block">${escapeHtml(t('profile.deleteBtn'))}</button>
+          <p id="delete-err" class="err" role="alert"></p>
+        </section>
       </main>
     `),
   );
@@ -263,6 +268,20 @@ export function renderProfile(root, navigate) {
       navigate(back);
     } catch (e2) {
       err.textContent = e2.message || t('error.profile');
+    }
+  });
+
+  const delErr = root.querySelector('#delete-err');
+  root.querySelector('#delete-account').addEventListener('click', async () => {
+    if (!window.confirm(t('profile.deleteConfirm'))) return;
+    delErr.textContent = '';
+    try {
+      await api('/api/auth/me', { method: 'DELETE' });
+      logout();
+      appState.user = null;
+      navigate('home');
+    } catch (e2) {
+      delErr.textContent = e2.message || t('error.generic');
     }
   });
 }

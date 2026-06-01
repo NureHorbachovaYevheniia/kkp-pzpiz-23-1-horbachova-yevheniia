@@ -71,6 +71,9 @@ const messages = {
     'profile.title': 'Редагування профілю',
     'profile.passwordLabel': 'Новий пароль',
     'profile.passwordPlaceholder': 'залиште порожнім, якщо не змінюєте',
+    'profile.deleteHint': 'Видалення акаунта є незворотним: усі ваші дані буде втрачено.',
+    'profile.deleteBtn': 'Видалити акаунт',
+    'profile.deleteConfirm': 'Ви впевнені? Акаунт і всі пов’язані дані буде видалено назавжди.',
 
     'teacher.dashboard.title': 'Кабінет викладача',
     'teacher.dashboard.stats':
@@ -265,6 +268,9 @@ const messages = {
     'profile.title': 'Edit profile',
     'profile.passwordLabel': 'New password',
     'profile.passwordPlaceholder': 'leave empty to keep current',
+    'profile.deleteHint': 'Deleting your account is permanent: all your data will be lost.',
+    'profile.deleteBtn': 'Delete account',
+    'profile.deleteConfirm': 'Are you sure? Your account and all related data will be deleted permanently.',
 
     'teacher.dashboard.title': 'Teacher dashboard',
     'teacher.dashboard.stats':

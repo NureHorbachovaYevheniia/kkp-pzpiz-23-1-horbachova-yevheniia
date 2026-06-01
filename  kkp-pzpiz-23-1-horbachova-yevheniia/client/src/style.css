@@ -278,6 +278,30 @@ h1 {
   width: 100%;
 }
 
+.btn--danger {
+  color: #ffffff;
+  background: var(--danger);
+  border-color: var(--danger);
+}
+
+.btn--danger:hover {
+  background: #a93226;
+  border-color: #a93226;
+}
+
+
+.danger-zone {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--line);
+}
+
+.danger-zone__hint {
+  margin: 0 0 0.75rem;
+  color: var(--text-soft);
+  font-size: 0.88rem;
+}
+
 /* ——— вибір ролі при реєстрації ——— */
 .role-choice {
   display: flex;
