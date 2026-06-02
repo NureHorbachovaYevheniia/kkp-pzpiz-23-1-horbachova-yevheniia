@@ -7,9 +7,12 @@ const router = Router();
 
 // секрет для підпису JWT
 const JWT_SECRET = process.env.JWT_SECRET || 'learnly_dev_secret_change_me';
+if (!process.env.JWT_SECRET) {
+  console.warn('Увага: JWT_SECRET не задано, працює dev-секрет');
+}
 const JWT_EXPIRES_IN = '7d';
 
-// створюємо JWT для користувача
+// створюємо JWT для користувача 
 function makeToken(user) {
   return jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 }

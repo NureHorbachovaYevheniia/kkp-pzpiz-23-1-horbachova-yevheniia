@@ -970,3 +970,50 @@ select:focus {
   text-align: center;
   cursor: pointer;
 }
+
+/* вузький екран (телефон) */
+@media (max-width: 768px) {
+  #app {
+    padding: 0 0.75rem 2rem;
+  }
+
+  .brand__inner {
+    padding: 0.75rem 1rem;
+  }
+
+  .brand__lang {
+    margin-left: 0;
+  }
+
+  .box,
+  .box--wide {
+    max-width: none;
+    margin-top: 1.25rem;
+    padding: 1.25rem;
+  }
+
+  .chart-box {
+    max-width: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .brand__user {
+    text-align: left;
+  }
+
+  .brand__account-inner {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .btn--block {
+    width: 100%;
+  }
+
+  .stats-table th,
+  .stats-table td {
+    padding: 0.45rem 0.35rem;
+    font-size: 0.8rem;
+  }
+}

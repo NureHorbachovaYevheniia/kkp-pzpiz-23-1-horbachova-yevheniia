@@ -19,10 +19,13 @@ initDb();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+// CORS_ORIGIN=http://localhost:5173
+const CORS_ORIGIN = process.env.CORS_ORIGIN || '*';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const requestLogPath = path.join(__dirname, 'data', 'request.log');
 const iotPath = path.join(__dirname, '..', 'iot');
+const clientDist = path.join(__dirname, '..', 'client', 'dist');
 fs.mkdirSync(path.dirname(requestLogPath), { recursive: true });
 
 // не приймаємо JSON більше 100 КБ
@@ -59,7 +62,7 @@ app.use((err, req, res, next) => {
 
 // дозволяємо запити з клієнта CORS
 app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Origin', CORS_ORIGIN);
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
   next();
@@ -109,7 +112,17 @@ app.use('/api', statsRouter);
 app.get('/iot', (req, res) => res.redirect('/iot/'));
 app.use('/iot', express.static(iotPath));
 
+// веб-клієнт після npm run build у client/
+if (fs.existsSync(path.join(clientDist, 'index.html'))) {
+  app.use(express.static(clientDist));
+}
+
 app.listen(PORT, () => {
   console.log('http://localhost:' + PORT);
+  if (fs.existsSync(path.join(clientDist, 'index.html'))) {
+    console.log('Web: http://localhost:' + PORT + '/');
+  } else {
+    console.log('Web: зберіть client (cd client && npm run build)');
+  }
   console.log('IoT: http://localhost:' + PORT + '/iot/');
 });
