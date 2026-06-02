@@ -27,7 +27,7 @@ async function api(path, options = {}) {
   const data = await res.json().catch(() => ({}));
 
   if (!res.ok) {
-    throw new Error(data.error || 'Помилка сервера');
+    throw new Error(data.error || t('serverError'));
   }
   return data;
 }
@@ -35,10 +35,10 @@ async function api(path, options = {}) {
 // показати, що пристрій онлайн
 function setOnline(yes) {
   if (yes) {
-    statusEl.textContent = '● Online';
+    statusEl.textContent = t('online');
     statusEl.classList.add('online');
   } else {
-    statusEl.textContent = '● Offline';
+    statusEl.textContent = t('offline');
     statusEl.classList.remove('online');
   }
 }
@@ -47,13 +47,25 @@ function setOnline(yes) {
 function showLogin() {
   setOnline(false);
   screen.innerHTML = `
-    <p class="hint">Вхід учня</p>
+    <p class="hint">${t('loginTitle')}</p>
     <label>Email</label>
     <input type="email" id="email" value="student1@learnly.local">
-    <label>Пароль</label>
+    <label>${t('password')}</label>
     <input type="password" id="password" value="student123">
   `;
-  buttons.innerHTML = '<button class="primary" id="btn-login">Увійти</button>';
+  buttons.innerHTML = `
+    <button type="button" id="lang-uk">${t('langUk')}</button>
+    <button type="button" id="lang-en">${t('langEn')}</button>
+    <button class="primary" id="btn-login">${t('loginBtn')}</button>
+  `;
+  document.getElementById('lang-uk').onclick = () => {
+    setLocale('uk');
+    showLogin();
+  };
+  document.getElementById('lang-en').onclick = () => {
+    setLocale('en');
+    showLogin();
+  };
   document.getElementById('btn-login').onclick = doLogin;
 }
 
@@ -63,7 +75,7 @@ async function doLogin() {
   const password = document.getElementById('password').value;
 
   buttons.innerHTML = '';
-  screen.innerHTML = '<p class="hint">Підключення...</p>';
+  screen.innerHTML = `<p class="hint">${t('connecting')}</p>`;
 
   try {
     const data = await api('/auth/login', {
@@ -72,7 +84,7 @@ async function doLogin() {
     });
 
     if (data.user.role !== 'student') {
-      throw new Error('Пристрій тільки для учнів');
+      throw new Error(t('studentsOnly'));
     }
 
     localStorage.setItem(TOKEN_KEY, data.token);
@@ -81,7 +93,7 @@ async function doLogin() {
   } catch (err) {
     setOnline(false);
     screen.innerHTML = `<p class="error">${err.message}</p>`;
-    buttons.innerHTML = '<button id="btn-retry">Спробувати знову</button>';
+    buttons.innerHTML = `<button id="btn-retry">${t('retry')}</button>`;
     document.getElementById('btn-retry').onclick = showLogin;
   }
 }
