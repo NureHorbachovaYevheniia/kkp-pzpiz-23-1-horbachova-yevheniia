@@ -24,7 +24,7 @@ export function initDb() {
       name TEXT NOT NULL,
       email TEXT NOT NULL UNIQUE,
       password_hash TEXT NOT NULL,
-      role TEXT NOT NULL CHECK(role IN ('teacher', 'student')),
+      role TEXT NOT NULL CHECK(role IN ('teacher', 'student', 'admin')),
       token TEXT,
       survey_language TEXT,
       survey_level TEXT,
@@ -200,11 +200,49 @@ export function initDb() {
     }
   }
 
+  // якщо в users ще немає ролі admin — оновлюємо таблицю 
+  migrateUsersRoleIfNeeded(db);
+
   // якщо база порожня — додаємо демо-дані
   seedDemoIfEmpty(db);
   seedStudentFlashDemoIfMissing(db);
   seedTeacherFlashDemoIfMissing(db);
   return db;
+}
+
+// Додати роль admin у CHECK для users.
+function migrateUsersRoleIfNeeded(db) {
+  const row = db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='users'").get();
+  // нова база вже має admin у схемі — нічого не робимо
+  if (!row || row.sql.includes("'admin'")) {
+    return;
+  }
+
+  // тимчасово вимикаємо зовнішні ключі, щоб можна було DROP users
+  db.pragma('foreign_keys = OFF');
+  db.exec(`
+    CREATE TABLE users_new (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      email TEXT NOT NULL UNIQUE,
+      password_hash TEXT NOT NULL,
+      role TEXT NOT NULL CHECK(role IN ('teacher', 'student', 'admin')),
+      token TEXT,
+      survey_language TEXT,
+      survey_level TEXT,
+      consent_at TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    INSERT INTO users_new (id, name, email, password_hash, role, token, survey_language, survey_level, consent_at, created_at)
+    SELECT id, name, email, password_hash, role, token, survey_language, survey_level, consent_at, created_at
+    FROM users;
+
+    DROP TABLE users;
+    ALTER TABLE users_new RENAME TO users;
+  `);
+  // знову вмикаємо перевірку зовнішніх ключів
+  db.pragma('foreign_keys = ON');
 }
 
 // повертає базу (використовується в усіх маршрутах)
