@@ -30,6 +30,8 @@ import {
   renderTest,
   renderTestResults,
 } from './screens/student.js';
+import { renderAdminDashboard, renderAdminLogs } from './screens/admin.js';
+import { dashboardScreen } from './screens/auth.js';
 
 const root = document.querySelector('#app');
 
@@ -105,6 +107,12 @@ async function render() {
       case 'test-results':
         renderTestResults(root, navigate);
         break;
+      case 'admin-dashboard':
+        await renderAdminDashboard(root, navigate);
+        break;
+      case 'admin-logs':
+        await renderAdminLogs(root, navigate);
+        break;
       default:
         navigate('home');
     }
@@ -130,9 +138,7 @@ async function bootstrap() {
   if (token) {
     try {
       appState.user = await api('/api/auth/me');
-      navigate(
-        appState.user.role === 'teacher' ? 'teacher-dashboard' : 'student-dashboard',
-      );
+      navigate(dashboardScreen(appState.user));
       return;
     } catch {
       clearToken();

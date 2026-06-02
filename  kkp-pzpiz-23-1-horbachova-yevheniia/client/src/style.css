@@ -860,3 +860,47 @@ select:focus {
   border-color: var(--orange);
   box-shadow: 0 0 0 3px var(--orange-soft);
 }
+
+.admin-table-wrap {
+  overflow-x: auto;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 0.55rem 0.6rem;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+
+.admin-table th {
+  font-weight: 600;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.admin-logs {
+  margin: 0;
+  padding: 0.75rem;
+  max-height: 60vh;
+  overflow: auto;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.admin-file-btn {
+  display: block;
+  text-align: center;
+  cursor: pointer;
+}
