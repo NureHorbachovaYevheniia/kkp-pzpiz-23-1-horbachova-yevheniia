@@ -109,12 +109,12 @@ function doLogout() {
 // головне меню після входу
 function showMainMenu(user) {
   screen.innerHTML = `
-    <p class="hint">Підключено</p>
+    <p class="hint">${t('connected')}</p>
     <p class="word">${user.name}</p>
   `;
   buttons.innerHTML = `
-    <button class="primary" id="btn-study">Навчання</button>
-    <button id="btn-logout">Вийти</button>
+    <button class="primary" id="btn-study">${t('study')}</button>
+    <button id="btn-logout">${t('logout')}</button>
   `;
   document.getElementById('btn-study').onclick = showSetList;
   document.getElementById('btn-logout').onclick = doLogout;
@@ -122,26 +122,26 @@ function showMainMenu(user) {
 
 // список наборів слів учня
 async function showSetList() {
-  screen.innerHTML = '<p class="hint">Завантаження...</p>';
+  screen.innerHTML = `<p class="hint">${t('loading')}</p>`;
   buttons.innerHTML = '';
 
   try {
     const sets = await api('/my-sets');
     if (sets.length === 0) {
-      screen.innerHTML = '<p class="error">Немає наборів слів</p>';
-      buttons.innerHTML = '<button id="btn-back">← Назад</button>';
+      screen.innerHTML = `<p class="error">${t('noSets')}</p>`;
+      buttons.innerHTML = `<button id="btn-back">${t('back')}</button>`;
       document.getElementById('btn-back').onclick = () => start();
       return;
     }
 
-    screen.innerHTML = '<p class="hint">Оберіть набір</p>';
+    screen.innerHTML = `<p class="hint">${t('pickSet')}</p>`;
     buttons.innerHTML = sets
       .map(
         (s) =>
           `<button data-id="${s.id}">${s.title} (${s.card_count})</button>`,
       )
       .join('');
-    buttons.innerHTML += '<button id="btn-back">← Назад</button>';
+    buttons.innerHTML += `<button id="btn-back">${t('back')}</button>`;
 
     buttons.querySelectorAll('button[data-id]').forEach((btn) => {
       btn.onclick = () => loadSet(Number(btn.dataset.id));
@@ -149,14 +149,14 @@ async function showSetList() {
     document.getElementById('btn-back').onclick = () => start();
   } catch (err) {
     screen.innerHTML = `<p class="error">${err.message}</p>`;
-    buttons.innerHTML = '<button id="btn-back">← Назад</button>';
+    buttons.innerHTML = `<button id="btn-back">${t('back')}</button>`;
     document.getElementById('btn-back').onclick = () => start();
   }
 }
 
 // завантажити картки набору
 async function loadSet(setId) {
-  screen.innerHTML = '<p class="hint">Завантаження карток...</p>';
+  screen.innerHTML = `<p class="hint">${t('loadingCards')}</p>`;
   buttons.innerHTML = '';
 
   try {
@@ -167,8 +167,8 @@ async function loadSet(setId) {
     flipped = false;
 
     if (studyCards.length === 0) {
-      screen.innerHTML = '<p class="error">Набір порожній</p>';
-      buttons.innerHTML = '<button id="btn-back">← Назад</button>';
+      screen.innerHTML = `<p class="error">${t('emptySet')}</p>`;
+      buttons.innerHTML = `<button id="btn-back">${t('back')}</button>`;
       document.getElementById('btn-back').onclick = showSetList;
       return;
     }
@@ -176,7 +176,7 @@ async function loadSet(setId) {
     showCard();
   } catch (err) {
     screen.innerHTML = `<p class="error">${err.message}</p>`;
-    buttons.innerHTML = '<button id="btn-back">← Назад</button>';
+    buttons.innerHTML = `<button id="btn-back">${t('back')}</button>`;
     document.getElementById('btn-back').onclick = showSetList;
   }
 }
@@ -202,10 +202,10 @@ function goNext() {
     showCard();
     return;
   }
-  screen.innerHTML = '<p class="hint">Картки закінчились</p>';
+  screen.innerHTML = `<p class="hint">${t('cardsDone')}</p>`;
   buttons.innerHTML = `
-    <button id="btn-again">Знову</button>
-    <button id="btn-menu">← Меню</button>
+    <button id="btn-again">${t('again')}</button>
+    <button id="btn-menu">${t('menu')}</button>
   `;
   document.getElementById('btn-again').onclick = () => {
     cardIndex = 0;
@@ -217,7 +217,7 @@ function goNext() {
 // відповідь учня: знаю або повторити
 async function answerCard(status) {
   buttons.querySelectorAll('button').forEach((b) => (b.disabled = true));
-  screen.innerHTML += '<p class="hint" id="saving">Збереження...</p>';
+  screen.innerHTML += `<p class="hint" id="saving">${t('saving')}</p>`;
 
   try {
     await saveProgress(status);
@@ -241,10 +241,10 @@ function showCard() {
   `;
 
   buttons.innerHTML = `
-    <button id="btn-flip">Переклад</button>
-    <button class="primary" id="btn-know">Знаю</button>
-    <button id="btn-repeat">Повторити</button>
-    <button id="btn-menu">← Меню</button>
+    <button id="btn-flip">${t('translation')}</button>
+    <button class="primary" id="btn-know">${t('know')}</button>
+    <button id="btn-repeat">${t('repeat')}</button>
+    <button id="btn-menu">${t('menu')}</button>
   `;
 
   document.getElementById('btn-flip').onclick = () => {
