@@ -1,5 +1,5 @@
 import { api } from '../api.js';
-import { el, escapeHtml, formatDate, statusLabel } from '../utils.js';
+import { el, escapeHtml, formatDate, deadlineAccentClass, statusLabel } from '../utils.js';
 import { appState } from '../state.js';
 import { headerBar, bindLogout } from './auth.js';
 import { t } from '../i18n.js';
@@ -17,6 +17,19 @@ const LANGUAGES = [
 
 function deadlineInputValue(deadline) {
   return String(deadline || '').includes('T') ? deadline : deadline + 'T23:59';
+}
+
+function testStartInputValue() {
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0, 16);
+}
+
+function teacherTestDatesMeta(a) {
+  if (a.mode !== 'test' || !a.test_start) {
+    return `<span class="${deadlineAccentClass(a.deadline)}">${escapeHtml(t('teacher.deadlineUntil', { date: formatDate(a.deadline) }))}</span>`;
+  }
+  return `<span class="${deadlineAccentClass(a.test_start)}">${escapeHtml(t('teacher.testStartsAt', { date: formatDate(a.test_start) }))}</span> · <span class="${deadlineAccentClass(a.deadline)}">${escapeHtml(t('teacher.deadlineUntil', { date: formatDate(a.deadline) }))}</span>`;
 }
 
 export async function renderTeacherDashboard(root, navigate) {
@@ -201,14 +214,17 @@ export async function renderTeacherClass(root, navigate) {
     .map(
       (a) => `<li class="set-row">
         <span class="set-title">${escapeHtml(a.title)}</span>
-        <span class="meta">${escapeHtml(a.word_set_title)} · ${escapeHtml(t('teacher.deadlineUntil', { date: formatDate(a.deadline) }))} · ${escapeHtml(statusLabel(a.mode))}</span>
+        <span class="meta">${escapeHtml(a.word_set_title)} · ${teacherTestDatesMeta(a)} · ${escapeHtml(statusLabel(a.mode))}</span>
         ${
           a.mode === 'test'
             ? a.status === 'active'
               ? `<button type="button" class="btn btn--ghost btn--sm close-test" data-id="${a.id}">Закрити тест</button>`
               : ''
-            : `<input type="datetime-local" class="test-deadline" data-id="${a.id}" value="${escapeHtml(deadlineInputValue(a.deadline))}" />
-               <button type="button" class="btn btn--secondary btn--sm activate-test" data-id="${a.id}">Активувати тест</button>`
+            : `<span class="test-schedule">
+                 <label>${escapeHtml(t('teacher.testStart'))} <input type="datetime-local" class="test-start" data-id="${a.id}" value="${escapeHtml(testStartInputValue())}" /></label>
+                 <label>${escapeHtml(t('teacher.testDeadline'))} <input type="datetime-local" class="test-deadline" data-id="${a.id}" value="${escapeHtml(deadlineInputValue(a.deadline))}" /></label>
+               </span>
+               <button type="button" class="btn btn--secondary btn--sm activate-test" data-id="${a.id}">${escapeHtml(t('teacher.activateTest'))}</button>`
         }
       </li>`,
     )
@@ -308,13 +324,15 @@ export async function renderTeacherClass(root, navigate) {
   root.querySelectorAll('.activate-test').forEach((btn) => {
     btn.addEventListener('click', async () => {
       const id = btn.getAttribute('data-id');
-      const input = root.querySelector('.test-deadline[data-id="' + id + '"]');
-      const deadline = input ? input.value : '';
-      if (!deadline) return;
+      const startInput = root.querySelector('.test-start[data-id="' + id + '"]');
+      const deadlineInput = root.querySelector('.test-deadline[data-id="' + id + '"]');
+      const test_start = startInput ? startInput.value : '';
+      const deadline = deadlineInput ? deadlineInput.value : '';
+      if (!test_start || !deadline) return;
       try {
         await api('/api/assignments/' + id + '/activate-test', {
           method: 'PUT',
-          body: JSON.stringify({ deadline }),
+          body: JSON.stringify({ test_start, deadline }),
         });
         await renderTeacherClass(root, navigate);
       } catch (e2) {

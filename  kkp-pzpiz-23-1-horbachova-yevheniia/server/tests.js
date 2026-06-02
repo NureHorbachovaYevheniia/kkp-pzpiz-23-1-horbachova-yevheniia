@@ -3,13 +3,9 @@ import { Router } from 'express';
 import { getDb } from './db.js';
 import { requireAuth } from './auth.js';
 import { requireStudent } from './middleware.js';
-import { getAssignmentById, canAccessAssignment, shuffleArray } from './helpers.js';
+import { getAssignmentById, canAccessAssignment, shuffleArray, datetimeValue } from './helpers.js';
 
 const router = Router();
-
-function deadlineValue(deadline) {
-  return String(deadline || '').includes('T') ? deadline : deadline + 'T23:59';
-}
 
 // прості правила доступу до тесту
 function testError(assignment, studentId) {
@@ -21,7 +17,10 @@ function testError(assignment, studentId) {
   }
 
   const now = new Date().toISOString().slice(0, 16);
-  if (deadlineValue(assignment.deadline) < now) {
+  if (assignment.test_start && datetimeValue(assignment.test_start) > now) {
+    return 'Тест ще не розпочався';
+  }
+  if (datetimeValue(assignment.deadline) < now) {
     return 'Час проходження тесту завершено';
   }
 

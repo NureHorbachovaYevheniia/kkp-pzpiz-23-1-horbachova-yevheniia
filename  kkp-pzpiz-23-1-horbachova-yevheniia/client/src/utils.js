@@ -57,6 +57,44 @@ export function formatDate(iso) {
   }
 }
 
+function parseDeadline(deadline) {
+  const raw = String(deadline || '').trim();
+  if (!raw) return null;
+  const iso = raw.includes('T') ? raw : raw + 'T23:59';
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+export function datetimeValue(iso) {
+  const raw = String(iso || '').trim();
+  if (!raw) return '';
+  return raw.includes('T') ? raw.slice(0, 16) : raw + 'T23:59';
+}
+
+export function testHasStarted(assignment) {
+  if (!assignment?.test_start) return false;
+  const now = new Date().toISOString().slice(0, 16);
+  return datetimeValue(assignment.test_start) <= now;
+}
+
+export function assignmentTestDateMeta(assignment) {
+  if (assignment.mode !== 'test' || !assignment.test_start) return null;
+  const started = testHasStarted(assignment);
+  const date = started ? assignment.deadline : assignment.test_start;
+  const labelKey = started ? 'student.assignment.submitBy' : 'student.assignment.testStarts';
+  return {
+    label: t(labelKey, { date: formatDate(date) }),
+    accentClass: deadlineAccentClass(date),
+  };
+}
+
+export function deadlineAccentClass(deadline) {
+  const d = parseDeadline(deadline);
+  if (!d) return 'deadline-accent deadline-accent--soon';
+  const msLeft = d.getTime() - Date.now();
+  return msLeft > 86400000 ? 'deadline-accent deadline-accent--ok' : 'deadline-accent deadline-accent--soon';
+}
+
 export function shuffleArray(arr) {
   const a = arr.slice();
   for (let i = a.length - 1; i > 0; i--) {

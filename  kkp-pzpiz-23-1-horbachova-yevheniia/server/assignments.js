@@ -7,13 +7,10 @@ import {
   canAccessAssignment,
   getClassForTeacher,
   computeStudentAssignmentStatus,
+  datetimeValue,
 } from './helpers.js';
 
 const router = Router();
-
-function deadlineValue(deadline) {
-  return String(deadline || '').includes('T') ? deadline : deadline + 'T23:59';
-}
 
 // створити завдання для класу
 router.post('/assignments', requireAuth, requireTeacher, (req, res) => {
@@ -88,10 +85,12 @@ router.get('/student/assignments', requireAuth, requireStudent, (req, res) => {
     )
     .all(req.user.id);
 
-  const enriched = rows.map((a) => ({
-    ...a,
-    student_status: computeStudentAssignmentStatus(db, a.id, req.user.id),
-  }));
+  const enriched = rows
+    .map((a) => ({
+      ...a,
+      student_status: computeStudentAssignmentStatus(db, a.id, req.user.id),
+    }))
+    .filter((a) => a.student_status !== 'completed');
 
   return res.json(enriched);
 });
@@ -108,19 +107,21 @@ router.put('/assignments/:id/activate-test', requireAuth, requireTeacher, (req, 
     return res.status(404).json({ error: 'Завдання не знайдено' });
   }
 
+  const testStart = String(req.body.test_start || '').trim();
   const deadline = String(req.body.deadline || assignment.deadline || '').trim();
-  if (!deadline) {
-    return res.status(400).json({ error: 'Вкажіть дедлайн' });
+  if (!testStart || !deadline) {
+    return res.status(400).json({ error: 'Вкажіть дату початку і дедлайн тесту' });
   }
 
-  const now = new Date().toISOString().slice(0, 16);
-  if (deadlineValue(deadline) < now) {
-    return res.status(400).json({ error: 'Дедлайн не може бути в минулому' });
+  if (datetimeValue(deadline) <= datetimeValue(testStart)) {
+    return res.status(400).json({ error: 'Дедлайн має бути після початку тесту' });
   }
 
   getDb()
-    .prepare("UPDATE assignments SET mode = 'test', status = 'active', deadline = ? WHERE id = ?")
-    .run(deadline, assignmentId);
+    .prepare(
+      "UPDATE assignments SET mode = 'test', status = 'active', test_start = ?, deadline = ? WHERE id = ?",
+    )
+    .run(testStart, deadline, assignmentId);
 
   const row = getAssignmentById(assignmentId);
   return res.json(row);

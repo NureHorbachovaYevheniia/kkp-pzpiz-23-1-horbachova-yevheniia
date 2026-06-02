@@ -192,11 +192,16 @@ function ensureAssignment(database, classId, setId, cfg) {
   start.setDate(start.getDate() + cfg.startOffset);
   const deadline = new Date();
   deadline.setDate(deadline.getDate() + cfg.deadlineOffset);
+  let testStart = null;
+  if (cfg.mode === 'test') {
+    testStart = new Date();
+    testStart.setDate(testStart.getDate() + (cfg.testStartOffset ?? cfg.startOffset ?? 0));
+  }
 
   const row = database
     .prepare(
-      `INSERT INTO assignments (class_id, word_set_id, title, start_date, deadline, mode, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO assignments (class_id, word_set_id, title, start_date, deadline, test_start, mode, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .run(
       classId,
@@ -204,6 +209,7 @@ function ensureAssignment(database, classId, setId, cfg) {
       cfg.title,
       start.toISOString().slice(0, 10),
       deadline.toISOString().slice(0, 10),
+      testStart ? testStart.toISOString().slice(0, 16) : null,
       cfg.mode,
       cfg.status,
     );

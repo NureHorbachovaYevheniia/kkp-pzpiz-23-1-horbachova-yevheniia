@@ -1,6 +1,12 @@
 // Маленькі допоміжні функції, які потрібні в кількох місцях.
 import { getDb } from './db.js';
 
+export function datetimeValue(iso) {
+  const raw = String(iso || '').trim();
+  if (!raw) return '';
+  return raw.includes('T') ? raw.slice(0, 16) : raw + 'T23:59';
+}
+
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
 // унікальний код класу

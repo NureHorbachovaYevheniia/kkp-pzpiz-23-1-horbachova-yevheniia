@@ -9,6 +9,9 @@ import {
   speakWord,
   speechSupported,
   formatExampleHtml,
+  assignmentTestDateMeta,
+  datetimeValue,
+  testHasStarted,
 } from '../utils.js';
 import { appState, resetStudyState, resetTestState, resetFlashState } from '../state.js';
 import { headerBar, bindLogout } from './auth.js';
@@ -25,8 +28,10 @@ const LANGUAGES = [
   'Українська',
 ];
 
-function deadlineValue(deadline) {
-  return String(deadline || '').includes('T') ? deadline : deadline + 'T23:59';
+function assignmentDateHtml(a) {
+  const meta = assignmentTestDateMeta(a);
+  if (!meta) return '';
+  return ` · <span class="${meta.accentClass}">${escapeHtml(meta.label)}</span>`;
 }
 
 // базовий шлях для навчання/тесту: завдання вчителя або власний набір учня
@@ -42,14 +47,32 @@ function studyBackScreen() {
 }
 
 export async function renderStudentDashboard(root, navigate) {
-  const assignments = await api('/api/student/assignments');
+  const [assignments, sets] = await Promise.all([
+    api('/api/student/assignments'),
+    api('/api/my-sets'),
+  ]);
 
   const assignList = (assignments || [])
     .map(
       (a) => `<li class="set-row">
         <span class="set-title">${escapeHtml(a.title)}</span>
-        <span class="meta">${escapeHtml(a.class_title)} · ${escapeHtml(t('teacher.deadlineUntil', { date: formatDate(a.deadline) }))}</span>
+        <span class="meta">${escapeHtml(a.class_title)}${assignmentDateHtml(a)}</span>
         <button type="button" class="btn btn--primary btn--sm open-assign" data-id="${a.id}" data-mode="${escapeHtml(a.mode)}">${escapeHtml(t('btn.open'))}</button>
+      </li>`,
+    )
+    .join('');
+
+  const setList = (sets || [])
+    .map(
+      (s) => `<li class="set-row">
+        <span class="set-title">${escapeHtml(s.title)}</span>
+        <span class="meta">${escapeHtml(
+          t('teacher.setMeta', {
+            language: s.language || '—',
+            count: s.card_count || 0,
+          }),
+        )}</span>
+        <button type="button" class="btn btn--primary btn--sm open-set" data-id="${s.id}">${escapeHtml(t('btn.open'))}</button>
       </li>`,
     )
     .join('');
@@ -57,10 +80,29 @@ export async function renderStudentDashboard(root, navigate) {
   root.replaceChildren(
     el(`
       <main class="box box--wide box--deck">
-        ${headerBar(appState.user, null, `<button type="button" id="stats" class="btn btn--secondary btn--sm">${escapeHtml(t('student.statsBtn'))}</button><button type="button" id="my-sets" class="btn btn--primary btn--sm">${escapeHtml(t('student.mySets'))}</button><button type="button" id="join" class="btn btn--secondary btn--sm">${escapeHtml(t('student.joinBtn'))}</button>`).outerHTML}
+        ${headerBar(appState.user, null, `<button type="button" id="stats" class="btn btn--secondary btn--sm">${escapeHtml(t('student.statsBtn'))}</button><button type="button" id="join" class="btn btn--secondary btn--sm">${escapeHtml(t('student.joinBtn'))}</button>`).outerHTML}
         <section class="deck-section">
           <h2 class="deck-heading">${escapeHtml(t('student.activeAssignments'))}</h2>
           ${assignList ? `<ul class="sets">${assignList}</ul>` : `<p class="empty-msg">${escapeHtml(t('student.noAssignments'))}</p>`}
+        </section>
+        <section class="deck-section">
+          <div class="deck-section-head">
+            <h2 class="deck-heading">${escapeHtml(t('student.mySetsTitle'))}</h2>
+            <button type="button" id="toggle-add-set" class="btn btn--secondary btn--sm">${escapeHtml(t('student.addSet'))}</button>
+          </div>
+          <section class="add-word-box" id="add-set-box" hidden>
+            <p class="add-word-title">${escapeHtml(t('student.newSet'))}</p>
+            <form id="new-set-form" class="form">
+              <input name="title" placeholder="${escapeHtml(t('teacher.placeholder.setTitle'))}" required maxlength="200" />
+              <select name="language" required>
+                <option value="" disabled selected>${escapeHtml(t('teacher.placeholder.selectLanguage'))}</option>
+                ${LANGUAGES.map((lng) => `<option value="${escapeHtml(lng)}">${escapeHtml(lng)}</option>`).join('')}
+              </select>
+              <button type="submit" class="btn btn--secondary btn--sm">${escapeHtml(t('btn.create'))}</button>
+            </form>
+            <p id="set-err" class="err"></p>
+          </section>
+          ${setList ? `<ul class="sets">${setList}</ul>` : `<p class="empty-msg">${escapeHtml(t('student.noSets'))}</p>`}
         </section>
       </main>
     `),
@@ -68,12 +110,48 @@ export async function renderStudentDashboard(root, navigate) {
 
   bindLogout(root, navigate);
   root.querySelector('#stats').addEventListener('click', () => navigate('student-stats'));
-  root.querySelector('#my-sets').addEventListener('click', () => navigate('student-sets'));
   root.querySelector('#join').addEventListener('click', () => navigate('student-join'));
   root.querySelectorAll('.open-assign').forEach((btn) => {
     btn.addEventListener('click', () => {
       appState.assignmentId = Number(btn.getAttribute('data-id'));
       navigate('assignment-detail');
+    });
+  });
+  root.querySelector('#toggle-add-set').addEventListener('click', () => {
+    const box = root.querySelector('#add-set-box');
+    box.hidden = !box.hidden;
+    if (!box.hidden) box.querySelector('[name=title]').focus();
+  });
+  root.querySelector('#new-set-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const errEl = root.querySelector('#set-err');
+    errEl.textContent = '';
+    const fd = new FormData(e.target);
+    const title = String(fd.get('title') || '').trim();
+    const language = String(fd.get('language') || '').trim();
+    if (title.length < 1 || title.length > 200) {
+      errEl.textContent = t('teacher.err.setTitle');
+      return;
+    }
+    if (!language) {
+      errEl.textContent = t('teacher.err.setLanguage');
+      return;
+    }
+    try {
+      const row = await api('/api/my-sets', {
+        method: 'POST',
+        body: JSON.stringify({ title, language }),
+      });
+      appState.wordSetId = row.id;
+      navigate('student-set');
+    } catch (e2) {
+      errEl.textContent = e2.message;
+    }
+  });
+  root.querySelectorAll('.open-set').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      appState.wordSetId = Number(btn.getAttribute('data-id'));
+      navigate('student-set');
     });
   });
 }
@@ -167,84 +245,7 @@ export function renderStudentJoin(root, navigate) {
 }
 
 export async function renderStudentSets(root, navigate) {
-  const sets = await api('/api/my-sets');
-  const list = (sets || [])
-    .map(
-      (s) => `<li class="set-row">
-        <span class="set-title">${escapeHtml(s.title)}</span>
-        <span class="meta">${escapeHtml(
-          t('teacher.setMeta', {
-            language: s.language || '—',
-            count: s.card_count || 0,
-          }),
-        )}</span>
-        <button type="button" class="btn btn--primary btn--sm open-set" data-id="${s.id}">${escapeHtml(t('btn.open'))}</button>
-      </li>`,
-    )
-    .join('');
-
-  root.replaceChildren(
-    el(`
-      <main class="box box--wide box--deck">
-        ${headerBar(appState.user, null, `<button type="button" id="back" class="btn btn--ghost btn--sm">${escapeHtml(t('btn.backCabinet'))}</button><button type="button" id="toggle-add-set" class="btn btn--primary btn--sm">${escapeHtml(t('student.addSet'))}</button>`).outerHTML}
-        <section class="deck-section">
-          <h2 class="deck-heading">${escapeHtml(t('student.mySetsTitle'))}</h2>
-          <section class="add-word-box" id="add-set-box" hidden>
-            <p class="add-word-title">${escapeHtml(t('student.newSet'))}</p>
-            <form id="new-set-form" class="form">
-              <input name="title" placeholder="${escapeHtml(t('teacher.placeholder.setTitle'))}" required maxlength="200" />
-              <select name="language" required>
-                <option value="" disabled selected>${escapeHtml(t('teacher.placeholder.selectLanguage'))}</option>
-                ${LANGUAGES.map((lng) => `<option value="${escapeHtml(lng)}">${escapeHtml(lng)}</option>`).join('')}
-              </select>
-              <button type="submit" class="btn btn--secondary btn--sm">${escapeHtml(t('btn.create'))}</button>
-            </form>
-            <p id="set-err" class="err"></p>
-          </section>
-          ${list ? `<ul class="sets">${list}</ul>` : `<p class="empty-msg">${escapeHtml(t('student.noSets'))}</p>`}
-        </section>
-      </main>
-    `),
-  );
-  bindLogout(root, navigate);
-  root.querySelector('#back').addEventListener('click', () => navigate('student-dashboard'));
-  root.querySelector('#toggle-add-set').addEventListener('click', () => {
-    const box = root.querySelector('#add-set-box');
-    box.hidden = !box.hidden;
-    if (!box.hidden) box.querySelector('[name=title]').focus();
-  });
-  root.querySelector('#new-set-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const errEl = root.querySelector('#set-err');
-    errEl.textContent = '';
-    const fd = new FormData(e.target);
-    const title = String(fd.get('title') || '').trim();
-    const language = String(fd.get('language') || '').trim();
-    if (title.length < 1 || title.length > 200) {
-      errEl.textContent = t('teacher.err.setTitle');
-      return;
-    }
-    if (!language) {
-      errEl.textContent = t('teacher.err.setLanguage');
-      return;
-    }
-    try {
-      const row = await api('/api/my-sets', {
-        method: 'POST',
-        body: JSON.stringify({ title, language }),
-      });
-      appState.wordSetId = row.id;
-      navigate('student-set');
-    } catch (e2) {
-      errEl.textContent = e2.message;
-    }
-  });
-  root.querySelectorAll('.open-set').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      appState.wordSetId = Number(btn.getAttribute('data-id'));
-      navigate('student-set');
-    });
-  });
+  return renderStudentDashboard(root, navigate);
 }
 
 export async function renderStudentSet(root, navigate) {
@@ -273,7 +274,7 @@ export async function renderStudentSet(root, navigate) {
   root.replaceChildren(
     el(`
       <main class="box box--wide box--deck">
-        ${headerBar(appState.user, null, `<button type="button" id="back" class="btn btn--ghost btn--sm">${escapeHtml(t('btn.backSets'))}</button><button type="button" id="toggle-add" class="btn btn--primary btn--sm">${escapeHtml(t('teacher.addWord'))}</button>`).outerHTML}
+        ${headerBar(appState.user, null, `<button type="button" id="back" class="btn btn--ghost btn--sm">${escapeHtml(t('btn.backCabinet'))}</button><button type="button" id="toggle-add" class="btn btn--primary btn--sm">${escapeHtml(t('teacher.addWord'))}</button>`).outerHTML}
         <div class="deck-section-head">
           <h2 class="deck-heading">${escapeHtml(set.title)}</h2>
           <button type="button" id="delete-set" class="btn btn--ghost btn--sm">${escapeHtml(t('student.setDelete'))}</button>
@@ -282,7 +283,7 @@ export async function renderStudentSet(root, navigate) {
         ${
           hasCards
             ? `<div class="card-actions card-actions--stack">
-                <button type="button" id="go-flash" class="btn btn--primary">${escapeHtml(t('student.assignment.flashcards'))}</button>
+                <button type="button" id="go-flash" class="btn btn--secondary">${escapeHtml(t('student.assignment.flashcards'))}</button>
                 <button type="button" id="go-study" class="btn btn--secondary">${escapeHtml(t('student.assignment.study'))}</button>
               </div>`
             : ''
@@ -304,7 +305,7 @@ export async function renderStudentSet(root, navigate) {
     `),
   );
   bindLogout(root, navigate);
-  root.querySelector('#back').addEventListener('click', () => navigate('student-sets'));
+  root.querySelector('#back').addEventListener('click', () => navigate('student-dashboard'));
   root.querySelector('#toggle-add').addEventListener('click', () => {
     const box = root.querySelector('#add-word-box');
     box.hidden = !box.hidden;
@@ -314,7 +315,7 @@ export async function renderStudentSet(root, navigate) {
     if (!window.confirm(t('student.setDeleteConfirm'))) return;
     try {
       await api('/api/my-sets/' + appState.wordSetId, { method: 'DELETE' });
-      navigate('student-sets');
+      navigate('student-dashboard');
     } catch (e2) {
       window.alert(e2.message);
     }
@@ -361,20 +362,26 @@ export async function renderStudentSet(root, navigate) {
 
 export async function renderAssignmentDetail(root, navigate) {
   const a = await api('/api/assignments/' + appState.assignmentId);
-  const canStudy = a.mode === 'study';
   const now = new Date().toISOString().slice(0, 16);
+  const testStarted = a.mode === 'test' && testHasStarted(a);
+  const canStudy = a.mode === 'study' || (a.mode === 'test' && !testStarted);
   const canTest =
     a.mode === 'test' &&
     a.status === 'active' &&
-    deadlineValue(a.deadline) >= now &&
+    testStarted &&
+    datetimeValue(a.deadline) >= now &&
     a.student_status !== 'completed';
+  const dateMeta = assignmentTestDateMeta(a);
+  const dateHtml = dateMeta
+    ? ` · <span class="${dateMeta.accentClass}">${escapeHtml(dateMeta.label)}</span>`
+    : '';
 
   root.replaceChildren(
     el(`
       <main class="box box--wide">
         ${headerBar(appState.user, null, `<button type="button" id="back" class="btn btn--ghost btn--sm">${escapeHtml(t('btn.backCabinet'))}</button>`).outerHTML}
         <h2 class="deck-heading">${escapeHtml(a.title)}</h2>
-        <p class="deck-hint">${escapeHtml(a.class_title)} · ${escapeHtml(a.word_set_title)} · ${escapeHtml(t('teacher.deadlineUntil', { date: formatDate(a.deadline) }))}</p>
+        <p class="deck-hint">${escapeHtml(a.class_title)} · ${escapeHtml(a.word_set_title)}${dateHtml}</p>
         <p class="hint">${escapeHtml(
           t('student.assignment.status', {
             status: statusLabel(a.student_status),
@@ -382,7 +389,7 @@ export async function renderAssignmentDetail(root, navigate) {
           }),
         )}</p>
         <div class="card-actions card-actions--stack">
-          ${canStudy ? `<button type="button" id="go-flash" class="btn btn--primary">${escapeHtml(t('student.assignment.flashcards'))}</button>` : ''}
+          ${canStudy ? `<button type="button" id="go-flash" class="btn btn--secondary">${escapeHtml(t('student.assignment.flashcards'))}</button>` : ''}
           ${canStudy ? `<button type="button" id="go-study" class="btn btn--secondary">${escapeHtml(t('student.assignment.study'))}</button>` : ''}
           ${canTest ? `<button type="button" id="go-test" class="btn btn--secondary">${escapeHtml(t('student.assignment.test'))}</button>` : ''}
         </div>

@@ -16,6 +16,7 @@
   --text-muted: #918c85;
 
   --danger: #c0392b;
+  --success: #2d8a4e;
 
   --radius: 10px;
   --radius-sm: 8px;
@@ -468,6 +469,21 @@ h1 {
   font-weight: 600;
 }
 
+.test-schedule {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.75rem;
+}
+
+.test-schedule label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
 .del-card {
   margin-left: auto;
 }
@@ -504,6 +520,18 @@ h1 {
 .meta {
   color: var(--text-muted);
   font-size: 0.8rem;
+}
+
+.deadline-accent {
+  font-weight: 600;
+}
+
+.deadline-accent--ok {
+  color: var(--success);
+}
+
+.deadline-accent--soon {
+  color: var(--danger);
 }
 
 .study-btn {

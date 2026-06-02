@@ -213,6 +213,15 @@ export function initDb() {
     }
   }
 
+  // дата початку тесту (коли учні можуть здавати)
+  try {
+    db.exec('ALTER TABLE assignments ADD COLUMN test_start TEXT');
+  } catch {
+  }
+  db.prepare(
+    "UPDATE assignments SET test_start = start_date WHERE mode = 'test' AND (test_start IS NULL OR test_start = '')",
+  ).run();
+
   // старі завдання з mode=mixed більше не використовуємо
   db.prepare("UPDATE assignments SET mode = 'study' WHERE mode = 'mixed'").run();
 
