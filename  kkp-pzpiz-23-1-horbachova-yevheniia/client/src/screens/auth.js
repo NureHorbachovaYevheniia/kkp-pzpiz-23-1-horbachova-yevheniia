@@ -170,6 +170,9 @@ export function renderRegisterSurvey(root, navigate) {
             <input name="consent" type="checkbox" required />
             ${escapeHtml(t('register.consent'))}
           </label>
+          <p class="hint">
+            <button type="button" id="open-privacy" class="btn btn--ghost btn--sm">${escapeHtml(t('privacy.open'))}</button>
+          </p>
           <button type="submit" class="btn btn--primary btn--block">${escapeHtml(t('survey.finish'))}</button>
         </form>
         <p class="hint"><button type="button" id="survey-back" class="btn btn--ghost btn--sm">${escapeHtml(t('btn.back'))}</button></p>
@@ -179,6 +182,9 @@ export function renderRegisterSurvey(root, navigate) {
   );
   const err = root.querySelector('#survey-err');
   root.querySelector('#survey-back').addEventListener('click', () => navigate('register-role'));
+  root.querySelector('#open-privacy').addEventListener('click', () => {
+    navigate('privacy', { privacyBack: 'register-survey' });
+  });
   root.querySelector('#survey-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     err.textContent = '';
@@ -213,6 +219,28 @@ export function renderRegisterSurvey(root, navigate) {
       err.textContent = e2.message || t('error.register');
     }
   });
+}
+
+// сторінка політики конфіденційності (GDPR)
+export function renderPrivacy(root, navigate) {
+  const back = appState.privacyBack || 'home';
+  const body = t('privacy.body')
+    .split('\n\n')
+    .map((p) => `<p>${escapeHtml(p)}</p>`)
+    .join('');
+
+  root.replaceChildren(
+    el(`
+      <main class="box">
+        <h1>${escapeHtml(t('privacy.title'))}</h1>
+        <div class="privacy-body">${body}</div>
+        <p class="hint">
+          <button type="button" id="privacy-back" class="btn btn--secondary btn--block">${escapeHtml(t('btn.back'))}</button>
+        </p>
+      </main>
+    `),
+  );
+  root.querySelector('#privacy-back').addEventListener('click', () => navigate(back));
 }
 
 export function headerBar(user, onLogout, extra = '') {
@@ -251,6 +279,9 @@ export function renderProfile(root, navigate) {
           <button type="submit" class="btn btn--primary btn--block">${escapeHtml(t('btn.save'))}</button>
         </form>
         <p id="profile-err" class="err" role="alert"></p>
+        <p class="hint">
+          <button type="button" id="open-privacy-profile" class="btn btn--ghost btn--sm">${escapeHtml(t('privacy.open'))}</button>
+        </p>
         <section class="profile-export">
           <p class="hint">${escapeHtml(t('profile.exportHint'))}</p>
           <button type="button" id="export-data" class="btn btn--secondary btn--block">${escapeHtml(t('profile.exportBtn'))}</button>
@@ -266,6 +297,9 @@ export function renderProfile(root, navigate) {
   );
   bindLogout(root, navigate);
   root.querySelector('#back').addEventListener('click', () => navigate(back));
+  root.querySelector('#open-privacy-profile').addEventListener('click', () => {
+    navigate('privacy', { privacyBack: 'profile' });
+  });
   const err = root.querySelector('#profile-err');
   root.querySelector('#profile-form').addEventListener('submit', async (e) => {
     e.preventDefault();

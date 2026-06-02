@@ -94,6 +94,14 @@ const messages = {
     'survey.choose': 'Оберіть...',
     'survey.finish': 'Завершити реєстрацію',
     'register.consent': 'Я погоджуюсь на обробку моїх персональних даних',
+    'privacy.open': 'Політика конфіденційності',
+    'privacy.title': 'Політика конфіденційності',
+    'privacy.body':
+      'Learnly — навчальна платформа для вивчення слів.\n\n' +
+      'Які дані збираємо: ім’я, email, роль, відповіді опитування при реєстрації, прогрес навчання та результати тестів.\n\n' +
+      'Навіщо: щоб надати доступ до класів, завдань і вашого кабінету.\n\n' +
+      'Ваші права: переглянути профіль, завантажити копію даних (експорт у профілі), видалити акаунт.\n\n' +
+      'Пароль зберігається у вигляді хешу. Не передавайте пароль іншим особам.',
     'error.consentRequired': 'Потрібна згода на обробку даних',
 
     'profile.title': 'Редагування профілю',
@@ -341,6 +349,14 @@ const messages = {
     'survey.choose': 'Choose...',
     'survey.finish': 'Finish registration',
     'register.consent': 'I agree to the processing of my personal data',
+    'privacy.open': 'Privacy policy',
+    'privacy.title': 'Privacy policy',
+    'privacy.body':
+      'Learnly is a vocabulary learning platform.\n\n' +
+      'Data we collect: name, email, role, survey answers at registration, learning progress, and test results.\n\n' +
+      'Why: to provide access to classes, assignments, and your account.\n\n' +
+      'Your rights: view your profile, download a copy of your data (export in profile), delete your account.\n\n' +
+      'Passwords are stored as a hash. Do not share your password with others.',
     'error.consentRequired': 'You must agree to data processing',
 
     'profile.title': 'Edit profile',
