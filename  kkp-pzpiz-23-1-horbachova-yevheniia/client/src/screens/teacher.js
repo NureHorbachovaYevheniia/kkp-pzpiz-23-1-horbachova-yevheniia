@@ -302,7 +302,10 @@ export async function renderTeacherClass(root, navigate) {
 
   root.querySelectorAll('.activate-test').forEach((btn) => {
     btn.addEventListener('click', async () => {
-      const deadline = window.prompt('Введіть дедлайн тесту YYYY-MM-DD', btn.getAttribute('data-deadline'));
+      const deadline = window.prompt(
+        'Введіть дедлайн тесту YYYY-MM-DDTHH:mm',
+        btn.getAttribute('data-deadline'),
+      );
       if (!deadline) return;
       try {
         await api('/api/assignments/' + btn.getAttribute('data-id') + '/activate-test', {

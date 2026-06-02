@@ -36,11 +36,16 @@ import { getDateLocale, t } from './i18n.js';
 export function formatDate(iso) {
   if (!iso) return '—';
   try {
-    return new Intl.DateTimeFormat(getDateLocale(), {
+    const options = {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
-    }).format(new Date(iso));
+    };
+    if (String(iso).includes('T')) {
+      options.hour = '2-digit';
+      options.minute = '2-digit';
+    }
+    return new Intl.DateTimeFormat(getDateLocale(), options).format(new Date(iso));
   } catch {
     return iso;
   }

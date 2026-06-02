@@ -11,6 +11,10 @@ import {
 
 const router = Router();
 
+function deadlineValue(deadline) {
+  return String(deadline || '').includes('T') ? deadline : deadline + 'T23:59';
+}
+
 // створити завдання для класу
 router.post('/assignments', requireAuth, requireTeacher, (req, res) => {
   const classId = Number(req.body.class_id);
@@ -109,8 +113,8 @@ router.put('/assignments/:id/activate-test', requireAuth, requireTeacher, (req, 
     return res.status(400).json({ error: 'Вкажіть дедлайн' });
   }
 
-  const today = new Date().toISOString().slice(0, 10);
-  if (deadline < today) {
+  const now = new Date().toISOString().slice(0, 16);
+  if (deadlineValue(deadline) < now) {
     return res.status(400).json({ error: 'Дедлайн не може бути в минулому' });
   }
 

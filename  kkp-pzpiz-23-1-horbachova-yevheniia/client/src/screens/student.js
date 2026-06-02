@@ -25,6 +25,10 @@ const LANGUAGES = [
   'Українська',
 ];
 
+function deadlineValue(deadline) {
+  return String(deadline || '').includes('T') ? deadline : deadline + 'T23:59';
+}
+
 // базовий шлях для навчання/тесту: завдання вчителя або власний набір учня
 function studyBase() {
   return appState.studySource === 'myset'
@@ -332,11 +336,11 @@ export async function renderStudentSet(root, navigate) {
 export async function renderAssignmentDetail(root, navigate) {
   const a = await api('/api/assignments/' + appState.assignmentId);
   const canStudy = a.mode === 'study' || a.mode === 'mixed';
-  const today = new Date().toISOString().slice(0, 10);
+  const now = new Date().toISOString().slice(0, 16);
   const canTest =
     a.mode === 'test' &&
     a.status === 'active' &&
-    a.deadline >= today &&
+    deadlineValue(a.deadline) >= now &&
     a.student_status !== 'completed';
 
   root.replaceChildren(

@@ -7,6 +7,10 @@ import { getAssignmentById, canAccessAssignment, shuffleArray } from './helpers.
 
 const router = Router();
 
+function deadlineValue(deadline) {
+  return String(deadline || '').includes('T') ? deadline : deadline + 'T23:59';
+}
+
 // прості правила доступу до тесту
 function testError(assignment, studentId) {
   if (assignment.mode !== 'test') {
@@ -16,8 +20,8 @@ function testError(assignment, studentId) {
     return 'Тест зараз недоступний';
   }
 
-  const today = new Date().toISOString().slice(0, 10);
-  if (assignment.deadline < today) {
+  const now = new Date().toISOString().slice(0, 16);
+  if (deadlineValue(assignment.deadline) < now) {
     return 'Час проходження тесту завершено';
   }
 
