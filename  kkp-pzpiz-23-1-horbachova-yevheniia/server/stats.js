@@ -2,7 +2,8 @@
 import { Router } from 'express';
 import { getDb } from './db.js';
 import { requireAuth } from './auth.js';
-import { requireStudent } from './middleware.js';
+import { requireStudent, requireTeacher } from './middleware.js';
+import { getClassForTeacher, computeStudentAssignmentStatus } from './helpers.js';
 
 const router = Router();
 
@@ -59,6 +60,72 @@ router.get('/student/stats', requireAuth, requireStudent, (req, res) => {
     recent_tests: recentTests,
     progress,
   });
+});
+
+// статистика класу для викладача
+router.get('/teacher/classes/:id/stats', requireAuth, requireTeacher, (req, res) => {
+  const db = getDb();
+  const classId = Number(req.params.id);
+  const teacherId = req.user.id;
+
+  // перевіряємо, що це клас цього викладача
+  const cls = getClassForTeacher(classId, teacherId);
+  if (!cls) {
+    return res.status(404).json({ error: 'Клас не знайдено' });
+  }
+
+  // середній бал по кожному завданню
+  const assignments = db
+    .prepare(
+      `SELECT a.id, a.title,
+         ROUND(AVG(tr.score), 1) AS avg_score,
+         COUNT(tr.id) AS completed_count
+       FROM assignments a
+       LEFT JOIN test_results tr ON tr.assignment_id = a.id
+       WHERE a.class_id = ?
+       GROUP BY a.id
+       ORDER BY a.id`,
+    )
+    .all(classId);
+
+  // список учнів класу
+  const students = db
+    .prepare(
+      `SELECT u.id, u.name
+       FROM class_members cm
+       INNER JOIN users u ON u.id = cm.student_id
+       WHERE cm.class_id = ?
+       ORDER BY u.name`,
+    )
+    .all(classId);
+
+  // для кожного учня — результати по завданнях
+  const studentsWithResults = students.map((student) => {
+    const classAssignments = db
+      .prepare('SELECT id, title FROM assignments WHERE class_id = ? ORDER BY id')
+      .all(classId);
+
+    const results = classAssignments.map((a) => {
+      const test = db
+        .prepare(
+          'SELECT score FROM test_results WHERE assignment_id = ? AND student_id = ?',
+        )
+        .get(a.id, student.id);
+
+      const status = computeStudentAssignmentStatus(db, a.id, student.id);
+
+      return {
+        assignment_id: a.id,
+        assignment_title: a.title,
+        score: test ? test.score : null,
+        status,
+      };
+    });
+
+    return { id: student.id, name: student.name, results };
+  });
+
+  return res.json({ assignments, students: studentsWithResults });
 });
 
 export default router;
