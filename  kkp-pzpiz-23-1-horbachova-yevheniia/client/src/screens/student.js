@@ -335,7 +335,7 @@ export async function renderStudentSet(root, navigate) {
 
 export async function renderAssignmentDetail(root, navigate) {
   const a = await api('/api/assignments/' + appState.assignmentId);
-  const canStudy = a.mode === 'study' || a.mode === 'mixed';
+  const canStudy = a.mode === 'study';
   const now = new Date().toISOString().slice(0, 16);
   const canTest =
     a.mode === 'test' &&

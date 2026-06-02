@@ -307,7 +307,7 @@ export function seedDemoIfEmpty(database) {
         'Тиждень 1: flash cards',
         start.toISOString().slice(0, 10),
         deadline.toISOString().slice(0, 10),
-        'mixed',
+        'study',
         'active',
       );
 
