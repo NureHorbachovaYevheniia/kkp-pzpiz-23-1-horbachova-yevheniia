@@ -11,6 +11,7 @@ import assignmentsRouter from './assignments.js';
 import studyRouter from './study.js';
 import testsRouter from './tests.js';
 import studentSetsRouter from './studentSets.js';
+import adminRouter from './admin.js';
 
 // створюємо базу і таблиці
 initDb();
@@ -99,6 +100,7 @@ app.use('/api', assignmentsRouter);
 app.use('/api', studyRouter);
 app.use('/api', testsRouter);
 app.use('/api', studentSetsRouter);
+app.use('/api', adminRouter);
 
 app.listen(PORT, () => {
   console.log('http://localhost:' + PORT);
