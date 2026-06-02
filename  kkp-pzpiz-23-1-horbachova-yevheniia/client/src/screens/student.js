@@ -42,10 +42,7 @@ function studyBackScreen() {
 }
 
 export async function renderStudentDashboard(root, navigate) {
-  const [assignments, stats] = await Promise.all([
-    api('/api/student/assignments'),
-    api('/api/student/stats'),
-  ]);
+  const assignments = await api('/api/student/assignments');
 
   const assignList = (assignments || [])
     .map(
@@ -57,8 +54,36 @@ export async function renderStudentDashboard(root, navigate) {
     )
     .join('');
 
-  const summary = stats?.summary || { tests_count: 0, words_known: 0 };
+  root.replaceChildren(
+    el(`
+      <main class="box box--wide box--deck">
+        ${headerBar(appState.user, null, `<button type="button" id="stats" class="btn btn--secondary btn--sm">${escapeHtml(t('student.statsBtn'))}</button><button type="button" id="my-sets" class="btn btn--primary btn--sm">${escapeHtml(t('student.mySets'))}</button><button type="button" id="join" class="btn btn--secondary btn--sm">${escapeHtml(t('student.joinBtn'))}</button>`).outerHTML}
+        <section class="deck-section">
+          <h2 class="deck-heading">${escapeHtml(t('student.activeAssignments'))}</h2>
+          ${assignList ? `<ul class="sets">${assignList}</ul>` : `<p class="empty-msg">${escapeHtml(t('student.noAssignments'))}</p>`}
+        </section>
+      </main>
+    `),
+  );
+
+  bindLogout(root, navigate);
+  root.querySelector('#stats').addEventListener('click', () => navigate('student-stats'));
+  root.querySelector('#my-sets').addEventListener('click', () => navigate('student-sets'));
+  root.querySelector('#join').addEventListener('click', () => navigate('student-join'));
+  root.querySelectorAll('.open-assign').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      appState.assignmentId = Number(btn.getAttribute('data-id'));
+      navigate('assignment-detail');
+    });
+  });
+}
+
+export async function renderStudentStats(root, navigate) {
+  const stats = await api('/api/student/stats');
+
+  const summary = stats?.summary || { tests_count: 0 };
   const recentTests = stats?.recent_tests || [];
+  const distribution = stats?.test_distribution || {};
 
   const recentList = recentTests
     .map(
@@ -69,57 +94,43 @@ export async function renderStudentDashboard(root, navigate) {
     )
     .join('');
 
+  const distKeys = ['excellent', 'good', 'fair', 'poor'];
+  const distValues = distKeys.map((key) => distribution[key] || 0);
+  const hasTests = distValues.some((n) => n > 0);
+
   root.replaceChildren(
     el(`
       <main class="box box--wide box--deck">
-        ${headerBar(appState.user, null, `<button type="button" id="my-sets" class="btn btn--primary btn--sm">${escapeHtml(t('student.mySets'))}</button><button type="button" id="join" class="btn btn--secondary btn--sm">${escapeHtml(t('student.joinBtn'))}</button>`).outerHTML}
+        ${headerBar(appState.user, null, `<button type="button" id="back" class="btn btn--ghost btn--sm">${escapeHtml(t('btn.backCabinet'))}</button>`).outerHTML}
         <section class="deck-section">
-          <h2 class="deck-heading">${escapeHtml(t('stats.myProgress'))}</h2>
+          <h2 class="deck-heading">${escapeHtml(t('stats.title'))}</h2>
           <div class="stat-cards">
             <div class="stat-card">${escapeHtml(t('stats.testsDone', { count: summary.tests_count }))}</div>
             <div class="stat-card">${escapeHtml(t('stats.avgScore', { score: summary.avg_score != null ? summary.avg_score : '—' }))}</div>
-            <div class="stat-card">${escapeHtml(t('stats.wordsKnown', { count: summary.words_known }))}</div>
           </div>
           <div class="chart-box">
-            <p class="deck-hint">${escapeHtml(t('stats.chart.progress'))}</p>
-            <canvas id="student-progress-chart"></canvas>
+            <p class="deck-hint">${escapeHtml(t('stats.chart.testResults'))}</p>
+            ${hasTests ? '<canvas id="student-test-chart"></canvas>' : `<p class="empty-msg">${escapeHtml(t('stats.noData'))}</p>`}
           </div>
           ${recentList ? `
             <p class="deck-hint">${escapeHtml(t('stats.chart.recentTests'))}</p>
             <ul class="sets">${recentList}</ul>
           ` : ''}
         </section>
-        <section class="deck-section">
-          <h2 class="deck-heading">${escapeHtml(t('student.activeAssignments'))}</h2>
-          ${assignList ? `<ul class="sets">${assignList}</ul>` : `<p class="empty-msg">${escapeHtml(t('student.noAssignments'))}</p>`}
-        </section>
       </main>
     `),
   );
 
-  // doughnut chart: прогрес слів
-  const progress = stats?.progress || {};
-  const progressLabels = ['know', 'almost', 'repeat', 'not_started'];
-  const progressValues = progressLabels.map((key) => progress[key] || 0);
-  const hasProgress = progressValues.some((n) => n > 0);
-  const progressCanvas = root.querySelector('#student-progress-chart');
-  if (hasProgress) {
+  if (hasTests) {
     renderDoughnutChart(
-      progressCanvas,
-      progressLabels.map((key) => statusLabel(key)),
-      progressValues,
+      root.querySelector('#student-test-chart'),
+      distKeys.map((key) => t('stats.bucket.' + key)),
+      distValues,
     );
   }
 
   bindLogout(root, navigate);
-  root.querySelector('#my-sets').addEventListener('click', () => navigate('student-sets'));
-  root.querySelector('#join').addEventListener('click', () => navigate('student-join'));
-  root.querySelectorAll('.open-assign').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      appState.assignmentId = Number(btn.getAttribute('data-id'));
-      navigate('assignment-detail');
-    });
-  });
+  root.querySelector('#back').addEventListener('click', () => navigate('student-dashboard'));
 }
 
 export function renderStudentJoin(root, navigate) {

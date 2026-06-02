@@ -22,6 +22,7 @@ import {
 } from './screens/teacher.js';
 import {
   renderStudentDashboard,
+  renderStudentStats,
   renderStudentJoin,
   renderStudentSets,
   renderStudentSet,
@@ -86,6 +87,9 @@ async function render() {
         break;
       case 'student-dashboard':
         await renderStudentDashboard(root, navigate);
+        break;
+      case 'student-stats':
+        await renderStudentStats(root, navigate);
         break;
       case 'student-join':
         renderStudentJoin(root, navigate);

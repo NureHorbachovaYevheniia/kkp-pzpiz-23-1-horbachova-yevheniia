@@ -3,7 +3,13 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import Database from 'better-sqlite3';
-import { seedDemoIfEmpty, seedStudentFlashDemoIfMissing, seedTeacherFlashDemoIfMissing, seedStatsDemoIfMissing } from './seed-demo.js';
+import {
+  seedDemoIfEmpty,
+  seedStudentFlashDemoIfMissing,
+  seedTeacherFlashDemoIfMissing,
+  seedStatsDemoIfMissing,
+  seedExtendedDemoIfMissing,
+} from './seed-demo.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dataDir = path.join(__dirname, 'data');
@@ -217,6 +223,7 @@ export function initDb() {
   seedDemoIfEmpty(db);
   seedStudentFlashDemoIfMissing(db);
   seedTeacherFlashDemoIfMissing(db);
+  seedExtendedDemoIfMissing(db);
   seedStatsDemoIfMissing(db);
   return db;
 }

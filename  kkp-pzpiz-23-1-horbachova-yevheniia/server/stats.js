@@ -21,22 +21,6 @@ router.get('/student/stats', requireAuth, requireStudent, (req, res) => {
     )
     .get(studentId);
 
-  // скільки слів у кожному статусі (know, almost, repeat...)
-  const progressRows = db
-    .prepare(
-      `SELECT status, COUNT(*) AS count
-       FROM word_progress
-       WHERE student_id = ?
-       GROUP BY status`,
-    )
-    .all(studentId);
-
-  // перетворюємо масив у простий об'єкт: { know: 5, repeat: 2 }
-  const progress = {};
-  for (const row of progressRows) {
-    progress[row.status] = row.count;
-  }
-
   const recentTests = db
     .prepare(
       `SELECT tr.score, tr.completed_at, a.title AS assignment_title
@@ -44,18 +28,34 @@ router.get('/student/stats', requireAuth, requireStudent, (req, res) => {
        INNER JOIN assignments a ON a.id = tr.assignment_id
        WHERE tr.student_id = ?
        ORDER BY tr.completed_at DESC
-       LIMIT 5`,
+       LIMIT 10`,
     )
     .all(studentId);
+
+  const distribution = db
+    .prepare(
+      `SELECT
+         SUM(CASE WHEN score >= 90 THEN 1 ELSE 0 END) AS excellent,
+         SUM(CASE WHEN score >= 70 AND score < 90 THEN 1 ELSE 0 END) AS good,
+         SUM(CASE WHEN score >= 50 AND score < 70 THEN 1 ELSE 0 END) AS fair,
+         SUM(CASE WHEN score < 50 THEN 1 ELSE 0 END) AS poor
+       FROM test_results
+       WHERE student_id = ?`,
+    )
+    .get(studentId);
 
   return res.json({
     summary: {
       tests_count: summary?.tests_count || 0,
       avg_score: summary?.avg_score ?? null,
-      words_known: progress.know || 0,
     },
     recent_tests: recentTests,
-    progress,
+    test_distribution: {
+      excellent: distribution?.excellent || 0,
+      good: distribution?.good || 0,
+      fair: distribution?.fair || 0,
+      poor: distribution?.poor || 0,
+    },
   });
 });
 
