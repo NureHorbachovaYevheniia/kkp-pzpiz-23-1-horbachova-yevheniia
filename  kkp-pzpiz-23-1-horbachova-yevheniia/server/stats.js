@@ -93,7 +93,7 @@ router.get('/teacher/classes/:id/stats', requireAuth, requireTeacher, (req, res)
     const results = classAssignments.map((a) => {
       const test = db
         .prepare(
-          'SELECT score FROM test_results WHERE assignment_id = ? AND student_id = ?',
+          'SELECT score, completed_at FROM test_results WHERE assignment_id = ? AND student_id = ?',
         )
         .get(a.id, student.id);
 
@@ -103,6 +103,7 @@ router.get('/teacher/classes/:id/stats', requireAuth, requireTeacher, (req, res)
         assignment_id: a.id,
         assignment_title: a.title,
         score: test ? test.score : null,
+        completed_at: test ? test.completed_at : null,
         status,
       };
     });

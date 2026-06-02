@@ -212,11 +212,13 @@ export async function renderTeacherClass(root, navigate) {
   for (const student of stats?.students || []) {
     for (const result of student.results || []) {
       const scoreText = result.score !== null ? result.score + '%' : '—';
+      const completedText = result.completed_at ? result.completed_at : '—';
       statsRows += `<tr>
         <td>${escapeHtml(student.name)}</td>
         <td>${escapeHtml(result.assignment_title)}</td>
         <td>${escapeHtml(String(scoreText))}</td>
         <td>${escapeHtml(statusLabel(result.status))}</td>
+        <td>${escapeHtml(completedText)}</td>
       </tr>`;
     }
   }
@@ -267,6 +269,7 @@ export async function renderTeacherClass(root, navigate) {
                 <th>${escapeHtml(t('stats.table.assignment'))}</th>
                 <th>${escapeHtml(t('stats.table.score'))}</th>
                 <th>${escapeHtml(t('stats.table.status'))}</th>
+                <th>Здано</th>
               </tr>
             </thead>
             <tbody>${statsRows}</tbody>
