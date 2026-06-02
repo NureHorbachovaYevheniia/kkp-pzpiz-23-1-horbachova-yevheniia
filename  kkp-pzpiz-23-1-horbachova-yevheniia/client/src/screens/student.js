@@ -349,7 +349,12 @@ export async function renderStudentSet(root, navigate) {
 export async function renderAssignmentDetail(root, navigate) {
   const a = await api('/api/assignments/' + appState.assignmentId);
   const canStudy = a.mode === 'study' || a.mode === 'mixed';
-  const canTest = a.mode === 'test' || a.mode === 'mixed';
+  const today = new Date().toISOString().slice(0, 10);
+  const canTest =
+    a.mode === 'test' &&
+    a.status === 'active' &&
+    a.deadline >= today &&
+    a.student_status !== 'completed';
 
   root.replaceChildren(
     el(`

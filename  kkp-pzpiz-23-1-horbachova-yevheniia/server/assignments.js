@@ -96,6 +96,36 @@ router.get('/student/assignments', requireAuth, requireStudent, (req, res) => {
   return res.json(enriched);
 });
 
+// викладач активує тестування для завдання
+router.put('/assignments/:id/activate-test', requireAuth, requireTeacher, (req, res) => {
+  const assignmentId = Number(req.params.id);
+  if (!Number.isInteger(assignmentId) || assignmentId < 1) {
+    return res.status(400).json({ error: 'Невірний id завдання' });
+  }
+
+  const assignment = getAssignmentById(assignmentId);
+  if (!canAccessAssignment(req.user, assignment)) {
+    return res.status(404).json({ error: 'Завдання не знайдено' });
+  }
+
+  const deadline = String(req.body.deadline || assignment.deadline || '').trim();
+  if (!deadline) {
+    return res.status(400).json({ error: 'Вкажіть дедлайн' });
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
+  if (deadline < today) {
+    return res.status(400).json({ error: 'Дедлайн не може бути в минулому' });
+  }
+
+  getDb()
+    .prepare("UPDATE assignments SET mode = 'test', status = 'active', deadline = ? WHERE id = ?")
+    .run(deadline, assignmentId);
+
+  const row = getAssignmentById(assignmentId);
+  return res.json(row);
+});
+
 // одне завдання (доступне і викладачу, і учню класу)
 router.get('/assignments/:id', requireAuth, (req, res) => {
   const assignmentId = Number(req.params.id);
