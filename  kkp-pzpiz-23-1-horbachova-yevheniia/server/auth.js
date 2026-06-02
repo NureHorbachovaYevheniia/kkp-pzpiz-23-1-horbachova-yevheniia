@@ -14,6 +14,20 @@ function makeToken(user) {
   return jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 }
 
+function normalizeTimeFormat(value) {
+  return value === '12' ? '12' : '24';
+}
+
+function publicUser(row) {
+  return {
+    id: row.id,
+    name: row.name,
+    email: row.email,
+    role: row.role,
+    time_format: normalizeTimeFormat(row.time_format),
+  };
+}
+
 // перевіряємо JWT з заголовка і знаходимо користувача в базі
 export function requireAuth(req, res, next) {
   const header = req.headers.authorization || '';
@@ -95,7 +109,7 @@ router.post('/login', (req, res) => {
   }
 
   const user = getDb()
-    .prepare('SELECT id, name, email, role, password_hash FROM users WHERE email = ?')
+    .prepare('SELECT id, name, email, role, password_hash, time_format FROM users WHERE email = ?')
     .get(email);
 
   // якщо користувача немає або пароль не збігається
@@ -108,7 +122,7 @@ router.post('/login', (req, res) => {
 
   return res.json({
     token,
-    user: { id: user.id, name: user.name, email: user.email, role: user.role },
+    user: publicUser(user),
   });
 });
 
@@ -202,12 +216,10 @@ router.get('/me/export', requireAuth, (req, res) => {
 
 // повертає дані поточного користувача
 router.get('/me', requireAuth, (req, res) => {
-  return res.json({
-    id: req.user.id,
-    name: req.user.name,
-    email: req.user.email,
-    role: req.user.role,
-  });
+  const row = getDb()
+    .prepare('SELECT id, name, email, role, time_format FROM users WHERE id = ?')
+    .get(req.user.id);
+  return res.json(publicUser(row));
 });
 
 // оновлення профілю (ім'я, email, пароль — за бажанням)
@@ -215,6 +227,7 @@ router.put('/me', requireAuth, (req, res) => {
   const name = String(req.body.name || '').trim();
   const email = String(req.body.email || '').trim().toLowerCase();
   const password = String(req.body.password || '');
+  const timeFormatRaw = req.body.time_format;
 
   if (name.length < 2 || name.length > 100) {
     return res.status(400).json({ error: 'Ім\'я 2–100 символів' });
@@ -225,17 +238,30 @@ router.put('/me', requireAuth, (req, res) => {
   if (password && password.length < 6) {
     return res.status(400).json({ error: 'Пароль мінімум 6 символів' });
   }
+  if (timeFormatRaw !== undefined && timeFormatRaw !== null && timeFormatRaw !== '') {
+    const tf = String(timeFormatRaw).trim();
+    if (tf !== '24' && tf !== '12') {
+      return res.status(400).json({ error: 'time_format: 24 або 12' });
+    }
+  }
+
+  const timeFormat =
+    timeFormatRaw !== undefined && timeFormatRaw !== null && timeFormatRaw !== ''
+      ? normalizeTimeFormat(String(timeFormatRaw).trim())
+      : normalizeTimeFormat(
+          getDb().prepare('SELECT time_format FROM users WHERE id = ?').get(req.user.id)?.time_format,
+        );
 
   try {
     if (password) {
       const password_hash = bcrypt.hashSync(password, 10);
       getDb()
-        .prepare('UPDATE users SET name = ?, email = ?, password_hash = ? WHERE id = ?')
-        .run(name, email, password_hash, req.user.id);
+        .prepare('UPDATE users SET name = ?, email = ?, password_hash = ?, time_format = ? WHERE id = ?')
+        .run(name, email, password_hash, timeFormat, req.user.id);
     } else {
       getDb()
-        .prepare('UPDATE users SET name = ?, email = ? WHERE id = ?')
-        .run(name, email, req.user.id);
+        .prepare('UPDATE users SET name = ?, email = ?, time_format = ? WHERE id = ?')
+        .run(name, email, timeFormat, req.user.id);
     }
   } catch (err) {
     if (err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
@@ -249,6 +275,7 @@ router.put('/me', requireAuth, (req, res) => {
     name,
     email,
     role: req.user.role,
+    time_format: timeFormat,
   });
 });
 

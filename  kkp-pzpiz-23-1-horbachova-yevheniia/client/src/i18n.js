@@ -107,6 +107,9 @@ const messages = {
     'profile.title': 'Редагування профілю',
     'profile.passwordLabel': 'Новий пароль',
     'profile.passwordPlaceholder': 'залиште порожнім, якщо не змінюєте',
+    'profile.timeFormat': 'Формат часу',
+    'profile.timeFormat24': '24 години (13:30)',
+    'profile.timeFormat12': '12 годин (1:30 PM)',
     'profile.exportHint': 'Завантажте копію всіх ваших даних у форматі JSON (GDPR).',
     'profile.exportBtn': 'Завантажити мої дані',
     'error.export': 'Не вдалося завантажити дані',
@@ -376,6 +379,9 @@ const messages = {
     'profile.title': 'Edit profile',
     'profile.passwordLabel': 'New password',
     'profile.passwordPlaceholder': 'leave empty to keep current',
+    'profile.timeFormat': 'Time format',
+    'profile.timeFormat24': '24-hour (13:30)',
+    'profile.timeFormat12': '12-hour (1:30 PM)',
     'profile.exportHint': 'Download a copy of all your data as JSON (GDPR).',
     'profile.exportBtn': 'Download my data',
     'error.export': 'Could not download your data',
@@ -580,7 +586,9 @@ const API_ERROR_KEYS = {
 };
 
 let locale = 'uk';
+let timeFormat = '24';
 const listeners = new Set();
+const timeFormatListeners = new Set();
 
 export function getLocale() {
   return locale;
@@ -588,6 +596,23 @@ export function getLocale() {
 
 export function getDateLocale() {
   return locale === 'en' ? 'en-GB' : 'uk-UA';
+}
+
+export function getTimeFormat() {
+  return timeFormat;
+}
+
+/** Застосовує налаштування користувача (формат часу) після входу або збереження профілю */
+export function syncUserPreferences(user) {
+  const next = !user ? '24' : user.time_format === '12' ? '12' : '24';
+  if (timeFormat === next) return;
+  timeFormat = next;
+  timeFormatListeners.forEach((fn) => fn(timeFormat));
+}
+
+export function onTimeFormatChange(fn) {
+  timeFormatListeners.add(fn);
+  return () => timeFormatListeners.delete(fn);
 }
 
 export function t(key, vars = {}) {

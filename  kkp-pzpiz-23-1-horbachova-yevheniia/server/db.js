@@ -28,6 +28,7 @@ export function initDb() {
       token TEXT,
       survey_language TEXT,
       survey_level TEXT,
+      time_format TEXT NOT NULL DEFAULT '24' CHECK(time_format IN ('24', '12')),
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
@@ -169,6 +170,12 @@ export function initDb() {
   // час згоди на обробку даних (GDPR)
   try {
     db.exec('ALTER TABLE users ADD COLUMN consent_at TEXT');
+  } catch {
+  }
+
+  // формат часу в профілі: 24-годинний або 12-годинний (AM/PM)
+  try {
+    db.exec("ALTER TABLE users ADD COLUMN time_format TEXT NOT NULL DEFAULT '24'");
   } catch {
   }
 

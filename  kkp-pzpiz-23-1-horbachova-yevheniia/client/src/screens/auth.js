@@ -1,7 +1,7 @@
 import { api, setToken, logout } from '../api.js';
 import { el, escapeHtml } from '../utils.js';
 import { appState } from '../state.js';
-import { t } from '../i18n.js';
+import { t, syncUserPreferences } from '../i18n.js';
 
 export function renderHome(root, navigate) {
   root.replaceChildren(
@@ -51,6 +51,7 @@ export function renderLogin(root, navigate) {
       });
       setToken(data.token);
       appState.user = data.user;
+      syncUserPreferences(data.user);
       navigate(dashboardScreen(data.user));
     } catch (e2) {
       err.textContent = e2.message || t('error.login');
@@ -213,6 +214,7 @@ export function renderRegisterSurvey(root, navigate) {
       });
       setToken(data.token);
       appState.user = data.user;
+      syncUserPreferences(data.user);
       appState.registerData = null;
       navigate(dashboardScreen(data.user));
     } catch (e2) {
@@ -266,16 +268,28 @@ export function renderProfile(root, navigate) {
     return;
   }
   const back = dashboardScreen(user);
+  const timeFormat = user.time_format === '12' ? '12' : '24';
   root.replaceChildren(
     el(`
       <main class="box">
         ${headerBar(user, null, `<button type="button" id="back" class="btn btn--ghost btn--sm">${escapeHtml(t('btn.backCabinet'))}</button>`).outerHTML}
         <h1>${escapeHtml(t('profile.title'))}</h1>
-        <p class="hint">${escapeHtml(user.role === 'teacher' ? t('role.teacher') : t('role.student'))}</p>
+        <p class="hint">${escapeHtml(user.role === 'teacher' ? t('role.teacher') : user.role === 'admin' ? t('role.admin') : t('role.student'))}</p>
         <form id="profile-form" class="form">
           <label>${escapeHtml(t('label.name'))} <input name="name" type="text" required maxlength="100" value="${escapeHtml(user.name)}" /></label>
           <label>${escapeHtml(t('label.email'))} <input name="email" type="email" autocomplete="username" required value="${escapeHtml(user.email)}" /></label>
           <label>${escapeHtml(t('profile.passwordLabel'))} <input name="password" type="password" autocomplete="new-password" minlength="6" placeholder="${escapeHtml(t('profile.passwordPlaceholder'))}" /></label>
+          <fieldset class="form-fieldset">
+            <legend>${escapeHtml(t('profile.timeFormat'))}</legend>
+            <label class="form-radio">
+              <input type="radio" name="time_format" value="24" ${timeFormat === '24' ? 'checked' : ''} />
+              ${escapeHtml(t('profile.timeFormat24'))}
+            </label>
+            <label class="form-radio">
+              <input type="radio" name="time_format" value="12" ${timeFormat === '12' ? 'checked' : ''} />
+              ${escapeHtml(t('profile.timeFormat12'))}
+            </label>
+          </fieldset>
           <button type="submit" class="btn btn--primary btn--block">${escapeHtml(t('btn.save'))}</button>
         </form>
         <p id="profile-err" class="err" role="alert"></p>
@@ -308,6 +322,7 @@ export function renderProfile(root, navigate) {
     const body = {
       name: String(fd.get('name') || ''),
       email: String(fd.get('email') || ''),
+      time_format: String(fd.get('time_format') || '24'),
     };
     const password = String(fd.get('password') || '');
     if (password) body.password = password;
@@ -316,6 +331,7 @@ export function renderProfile(root, navigate) {
         method: 'PUT',
         body: JSON.stringify(body),
       });
+      syncUserPreferences(appState.user);
       navigate(back);
     } catch (e2) {
       err.textContent = e2.message || t('error.profile');
@@ -348,6 +364,7 @@ export function renderProfile(root, navigate) {
       await api('/api/auth/me', { method: 'DELETE' });
       logout();
       appState.user = null;
+      syncUserPreferences(null);
       navigate('home');
     } catch (e2) {
       delErr.textContent = e2.message || t('error.generic');
@@ -374,6 +391,7 @@ export function renderBrandAccount(user, navigate) {
   slot.querySelector('#brand-logout').addEventListener('click', () => {
     logout();
     appState.user = null;
+    syncUserPreferences(null);
     navigate('home');
   });
 }
@@ -382,6 +400,7 @@ export function bindLogout(root, navigate) {
   root.querySelector('#logout')?.addEventListener('click', () => {
     logout();
     appState.user = null;
+    syncUserPreferences(null);
     navigate('home');
   });
 }

@@ -2,7 +2,7 @@
 import './style.css';
 import { api, getToken, clearToken } from './api.js';
 import { appState } from './state.js';
-import { initI18n, mountLangSwitcher, onLocaleChange, updateBrandTag, t, isAuthTokenError } from './i18n.js';
+import { initI18n, mountLangSwitcher, onLocaleChange, onTimeFormatChange, syncUserPreferences, updateBrandTag, t, isAuthTokenError } from './i18n.js';
 import {
   renderHome,
   renderLogin,
@@ -125,6 +125,7 @@ async function render() {
     if (isAuthTokenError(e.message)) {
       clearToken();
       appState.user = null;
+      syncUserPreferences(null);
       navigate('login');
       return;
     }
@@ -142,6 +143,7 @@ async function bootstrap() {
   if (token) {
     try {
       appState.user = await api('/api/auth/me');
+      syncUserPreferences(appState.user);
       navigate(dashboardScreen(appState.user));
       return;
     } catch {
@@ -156,6 +158,9 @@ mountLangSwitcher(document.querySelector('#lang-switcher'));
 updateBrandTag();
 onLocaleChange(() => {
   updateBrandTag();
+  render();
+});
+onTimeFormatChange(() => {
   render();
 });
 

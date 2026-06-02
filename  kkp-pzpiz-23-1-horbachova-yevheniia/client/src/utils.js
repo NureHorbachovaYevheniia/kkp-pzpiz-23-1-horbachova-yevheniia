@@ -31,7 +31,12 @@ export function formatExampleHtml(example) {
   return html;
 }
 
-import { getDateLocale, t } from './i18n.js';
+import { getDateLocale, getTimeFormat, t } from './i18n.js';
+
+function hasTimeComponent(iso) {
+  const s = String(iso);
+  return s.includes('T') || /\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/.test(s);
+}
 
 export function formatDate(iso) {
   if (!iso) return '—';
@@ -41,9 +46,10 @@ export function formatDate(iso) {
       month: 'short',
       day: 'numeric',
     };
-    if (String(iso).includes('T')) {
+    if (hasTimeComponent(iso)) {
       options.hour = '2-digit';
       options.minute = '2-digit';
+      options.hour12 = getTimeFormat() === '12';
     }
     return new Intl.DateTimeFormat(getDateLocale(), options).format(new Date(iso));
   } catch {
