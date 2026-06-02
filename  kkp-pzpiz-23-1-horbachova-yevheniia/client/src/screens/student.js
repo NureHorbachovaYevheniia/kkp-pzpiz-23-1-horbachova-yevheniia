@@ -219,9 +219,8 @@ export async function renderStudentSet(root, navigate) {
         ${
           hasCards
             ? `<div class="card-actions card-actions--stack">
-                <button type="button" id="go-study" class="btn btn--primary">${escapeHtml(t('student.assignment.study'))}</button>
-                <button type="button" id="go-review" class="btn btn--secondary">${escapeHtml(t('student.assignment.review'))}</button>
-                <button type="button" id="go-test" class="btn btn--secondary">${escapeHtml(t('student.assignment.test'))}</button>
+                <button type="button" id="go-flash" class="btn btn--primary">${escapeHtml(t('student.assignment.flashcards'))}</button>
+                <button type="button" id="go-study" class="btn btn--secondary">${escapeHtml(t('student.assignment.study'))}</button>
               </div>`
             : ''
         }
@@ -282,22 +281,15 @@ export async function renderStudentSet(root, navigate) {
       await renderStudentSet(root, navigate);
     });
   });
+  root.querySelector('#go-flash')?.addEventListener('click', () => {
+    resetFlashState();
+    appState.studySource = 'myset';
+    navigate('flashcards');
+  });
   root.querySelector('#go-study')?.addEventListener('click', () => {
     resetStudyState();
     appState.studySource = 'myset';
-    appState.reviewErrorsOnly = false;
     navigate('study');
-  });
-  root.querySelector('#go-review')?.addEventListener('click', () => {
-    resetStudyState();
-    appState.studySource = 'myset';
-    appState.reviewErrorsOnly = true;
-    navigate('study');
-  });
-  root.querySelector('#go-test')?.addEventListener('click', () => {
-    resetTestState();
-    appState.studySource = 'myset';
-    navigate('test');
   });
 }
 
@@ -319,8 +311,8 @@ export async function renderAssignmentDetail(root, navigate) {
           }),
         )}</p>
         <div class="card-actions card-actions--stack">
-          ${canStudy ? `<button type="button" id="go-study" class="btn btn--primary">${escapeHtml(t('student.assignment.study'))}</button>` : ''}
-          ${canStudy ? `<button type="button" id="go-review" class="btn btn--secondary">${escapeHtml(t('student.assignment.review'))}</button>` : ''}
+          ${canStudy ? `<button type="button" id="go-flash" class="btn btn--primary">${escapeHtml(t('student.assignment.flashcards'))}</button>` : ''}
+          ${canStudy ? `<button type="button" id="go-study" class="btn btn--secondary">${escapeHtml(t('student.assignment.study'))}</button>` : ''}
           ${canTest ? `<button type="button" id="go-test" class="btn btn--secondary">${escapeHtml(t('student.assignment.test'))}</button>` : ''}
         </div>
       </main>
@@ -328,16 +320,14 @@ export async function renderAssignmentDetail(root, navigate) {
   );
   bindLogout(root, navigate);
   root.querySelector('#back').addEventListener('click', () => navigate('student-dashboard'));
+  root.querySelector('#go-flash')?.addEventListener('click', () => {
+    resetFlashState();
+    appState.studySource = 'assignment';
+    navigate('flashcards');
+  });
   root.querySelector('#go-study')?.addEventListener('click', () => {
     resetStudyState();
     appState.studySource = 'assignment';
-    appState.reviewErrorsOnly = false;
-    navigate('study');
-  });
-  root.querySelector('#go-review')?.addEventListener('click', () => {
-    resetStudyState();
-    appState.studySource = 'assignment';
-    appState.reviewErrorsOnly = true;
     navigate('study');
   });
   root.querySelector('#go-test')?.addEventListener('click', () => {

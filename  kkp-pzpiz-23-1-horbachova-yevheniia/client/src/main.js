@@ -26,6 +26,7 @@ import {
   renderStudentSet,
   renderAssignmentDetail,
   renderStudy,
+  renderFlashcards,
   renderTest,
   renderTestResults,
 } from './screens/student.js';
@@ -94,6 +95,9 @@ async function render() {
         break;
       case 'study':
         await renderStudy(root, navigate);
+        break;
+      case 'flashcards':
+        await renderFlashcards(root, navigate);
         break;
       case 'test':
         await renderTest(root, navigate);
