@@ -166,6 +166,12 @@ export function initDb() {
     }
   }
 
+  // час згоди на обробку даних (GDPR)
+  try {
+    db.exec('ALTER TABLE users ADD COLUMN consent_at TEXT');
+  } catch {
+  }
+
   // прибираємо старі поля, які більше не використовуються
   const oldColumns = [
     'ALTER TABLE word_sets DROP COLUMN topic',
