@@ -6,6 +6,12 @@ const screen = document.getElementById('screen');
 const buttons = document.getElementById('buttons');
 const statusEl = document.querySelector('.device-status');
 
+// дані для навчання
+let studyCards = [];
+let cardIndex = 0;
+let flipped = false;
+let currentSetId = null;
+
 // запит до сервера
 async function api(path, options = {}) {
   const headers = { ...options.headers };
@@ -71,12 +77,7 @@ async function doLogin() {
 
     localStorage.setItem(TOKEN_KEY, data.token);
     setOnline(true);
-    screen.innerHTML = `
-      <p class="hint">Підключено</p>
-      <p class="word">${data.user.name}</p>
-    `;
-    buttons.innerHTML = '<button id="btn-logout">Вийти</button>';
-    document.getElementById('btn-logout').onclick = doLogout;
+    showMainMenu(data.user);
   } catch (err) {
     setOnline(false);
     screen.innerHTML = `<p class="error">${err.message}</p>`;
@@ -87,7 +88,126 @@ async function doLogin() {
 
 function doLogout() {
   localStorage.removeItem(TOKEN_KEY);
+  studyCards = [];
+  cardIndex = 0;
+  currentSetId = null;
   showLogin();
+}
+
+// головне меню після входу
+function showMainMenu(user) {
+  screen.innerHTML = `
+    <p class="hint">Підключено</p>
+    <p class="word">${user.name}</p>
+  `;
+  buttons.innerHTML = `
+    <button class="primary" id="btn-study">Навчання</button>
+    <button id="btn-logout">Вийти</button>
+  `;
+  document.getElementById('btn-study').onclick = showSetList;
+  document.getElementById('btn-logout').onclick = doLogout;
+}
+
+// список наборів слів учня
+async function showSetList() {
+  screen.innerHTML = '<p class="hint">Завантаження...</p>';
+  buttons.innerHTML = '';
+
+  try {
+    const sets = await api('/my-sets');
+    if (sets.length === 0) {
+      screen.innerHTML = '<p class="error">Немає наборів слів</p>';
+      buttons.innerHTML = '<button id="btn-back">← Назад</button>';
+      document.getElementById('btn-back').onclick = () => start();
+      return;
+    }
+
+    screen.innerHTML = '<p class="hint">Оберіть набір</p>';
+    buttons.innerHTML = sets
+      .map(
+        (s) =>
+          `<button data-id="${s.id}">${s.title} (${s.card_count})</button>`,
+      )
+      .join('');
+    buttons.innerHTML += '<button id="btn-back">← Назад</button>';
+
+    buttons.querySelectorAll('button[data-id]').forEach((btn) => {
+      btn.onclick = () => loadSet(Number(btn.dataset.id));
+    });
+    document.getElementById('btn-back').onclick = () => start();
+  } catch (err) {
+    screen.innerHTML = `<p class="error">${err.message}</p>`;
+    buttons.innerHTML = '<button id="btn-back">← Назад</button>';
+    document.getElementById('btn-back').onclick = () => start();
+  }
+}
+
+// завантажити картки набору
+async function loadSet(setId) {
+  screen.innerHTML = '<p class="hint">Завантаження карток...</p>';
+  buttons.innerHTML = '';
+
+  try {
+    const data = await api('/my-sets/' + setId + '/study');
+    studyCards = data.cards;
+    currentSetId = setId;
+    cardIndex = 0;
+    flipped = false;
+
+    if (studyCards.length === 0) {
+      screen.innerHTML = '<p class="error">Набір порожній</p>';
+      buttons.innerHTML = '<button id="btn-back">← Назад</button>';
+      document.getElementById('btn-back').onclick = showSetList;
+      return;
+    }
+
+    showCard();
+  } catch (err) {
+    screen.innerHTML = `<p class="error">${err.message}</p>`;
+    buttons.innerHTML = '<button id="btn-back">← Назад</button>';
+    document.getElementById('btn-back').onclick = showSetList;
+  }
+}
+
+// показати поточну картку
+function showCard() {
+  const card = studyCards[cardIndex];
+  flipped = false;
+
+  screen.innerHTML = `
+    <p class="word">${card.word}</p>
+    <p class="translation" id="translation" style="display:none">${card.translation}</p>
+    <p class="counter">${cardIndex + 1} / ${studyCards.length}</p>
+  `;
+
+  buttons.innerHTML = `
+    <button id="btn-flip">Переклад</button>
+    <button id="btn-next">Далі</button>
+    <button id="btn-menu">← Меню</button>
+  `;
+
+  document.getElementById('btn-flip').onclick = () => {
+    document.getElementById('translation').style.display = 'block';
+    flipped = true;
+  };
+  document.getElementById('btn-next').onclick = () => {
+    if (cardIndex < studyCards.length - 1) {
+      cardIndex += 1;
+      showCard();
+    } else {
+      screen.innerHTML = '<p class="hint">Картки закінчились</p>';
+      buttons.innerHTML = `
+        <button id="btn-again">Знову</button>
+        <button id="btn-menu">← Меню</button>
+      `;
+      document.getElementById('btn-again').onclick = () => {
+        cardIndex = 0;
+        showCard();
+      };
+      document.getElementById('btn-menu').onclick = showSetList;
+    }
+  };
+  document.getElementById('btn-menu').onclick = showSetList;
 }
 
 // перевіряємо, чи вже залогінені
@@ -105,12 +225,7 @@ async function start() {
       return;
     }
     setOnline(true);
-    screen.innerHTML = `
-      <p class="hint">Підключено</p>
-      <p class="word">${user.name}</p>
-    `;
-    buttons.innerHTML = '<button id="btn-logout">Вийти</button>';
-    document.getElementById('btn-logout').onclick = doLogout;
+    showMainMenu(user);
   } catch {
     doLogout();
   }
