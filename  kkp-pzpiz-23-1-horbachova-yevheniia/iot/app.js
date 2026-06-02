@@ -169,6 +169,54 @@ async function loadSet(setId) {
   }
 }
 
+// зберегти прогрес на сервері
+async function saveProgress(status) {
+  const card = studyCards[cardIndex];
+  await api('/my-sets/' + currentSetId + '/progress', {
+    method: 'POST',
+    body: JSON.stringify({
+      word_card_id: card.id,
+      status: status,
+    }),
+  });
+  // оновлюємо статус у пам'яті
+  card.progress_status = status;
+}
+
+// перейти до наступної картки
+function goNext() {
+  if (cardIndex < studyCards.length - 1) {
+    cardIndex += 1;
+    showCard();
+    return;
+  }
+  screen.innerHTML = '<p class="hint">Картки закінчились</p>';
+  buttons.innerHTML = `
+    <button id="btn-again">Знову</button>
+    <button id="btn-menu">← Меню</button>
+  `;
+  document.getElementById('btn-again').onclick = () => {
+    cardIndex = 0;
+    showCard();
+  };
+  document.getElementById('btn-menu').onclick = showSetList;
+}
+
+// відповідь учня: знаю або повторити
+async function answerCard(status) {
+  buttons.querySelectorAll('button').forEach((b) => (b.disabled = true));
+  screen.innerHTML += '<p class="hint" id="saving">Збереження...</p>';
+
+  try {
+    await saveProgress(status);
+    goNext();
+  } catch (err) {
+    const saving = document.getElementById('saving');
+    if (saving) saving.textContent = err.message;
+    saving.className = 'error';
+    buttons.querySelectorAll('button').forEach((b) => (b.disabled = false));
+  }
+}
 // показати поточну картку
 function showCard() {
   const card = studyCards[cardIndex];
@@ -182,7 +230,8 @@ function showCard() {
 
   buttons.innerHTML = `
     <button id="btn-flip">Переклад</button>
-    <button id="btn-next">Далі</button>
+    <button class="primary" id="btn-know">Знаю</button>
+    <button id="btn-repeat">Повторити</button>
     <button id="btn-menu">← Меню</button>
   `;
 
@@ -190,23 +239,8 @@ function showCard() {
     document.getElementById('translation').style.display = 'block';
     flipped = true;
   };
-  document.getElementById('btn-next').onclick = () => {
-    if (cardIndex < studyCards.length - 1) {
-      cardIndex += 1;
-      showCard();
-    } else {
-      screen.innerHTML = '<p class="hint">Картки закінчились</p>';
-      buttons.innerHTML = `
-        <button id="btn-again">Знову</button>
-        <button id="btn-menu">← Меню</button>
-      `;
-      document.getElementById('btn-again').onclick = () => {
-        cardIndex = 0;
-        showCard();
-      };
-      document.getElementById('btn-menu').onclick = showSetList;
-    }
-  };
+  document.getElementById('btn-know').onclick = () => answerCard('know');
+  document.getElementById('btn-repeat').onclick = () => answerCard('repeat');
   document.getElementById('btn-menu').onclick = showSetList;
 }
 
