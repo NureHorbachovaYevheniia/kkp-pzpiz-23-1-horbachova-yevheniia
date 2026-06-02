@@ -3,6 +3,7 @@ import { el, escapeHtml, formatDate, statusLabel } from '../utils.js';
 import { appState } from '../state.js';
 import { headerBar, bindLogout } from './auth.js';
 import { t } from '../i18n.js';
+import { renderBarChart } from '../charts.js';
 
 const LANGUAGES = [
   'English',
@@ -184,7 +185,11 @@ export async function renderTeacherDashboard(root, navigate) {
 }
 
 export async function renderTeacherClass(root, navigate) {
-  const data = await api('/api/classes/' + appState.classId);
+  const [data, stats] = await Promise.all([
+    api('/api/classes/' + appState.classId),
+    api('/api/teacher/classes/' + appState.classId + '/stats'),
+  ]);
+
   const students = (data.students || [])
     .map((s) => `<li>${escapeHtml(s.name)} (${escapeHtml(s.email)})</li>`)
     .join('');
@@ -196,6 +201,20 @@ export async function renderTeacherClass(root, navigate) {
       </li>`,
     )
     .join('');
+
+  // таблиця: учень | завдання | бал | статус
+  let statsRows = '';
+  for (const student of stats?.students || []) {
+    for (const result of student.results || []) {
+      const scoreText = result.score !== null ? result.score + '%' : '—';
+      statsRows += `<tr>
+        <td>${escapeHtml(student.name)}</td>
+        <td>${escapeHtml(result.assignment_title)}</td>
+        <td>${escapeHtml(String(scoreText))}</td>
+        <td>${escapeHtml(statusLabel(result.status))}</td>
+      </tr>`;
+    }
+  }
 
   root.replaceChildren(
     el(`
@@ -228,9 +247,45 @@ export async function renderTeacherClass(root, navigate) {
           <h3 class="deck-heading">${escapeHtml(t('teacher.assignments'))}</h3>
           ${assignments ? `<ul class="sets">${assignments}</ul>` : `<p class="empty-msg">${escapeHtml(t('teacher.noAssignments'))}</p>`}
         </section>
+        <section class="deck-section">
+          <h3 class="deck-heading">${escapeHtml(t('stats.title'))}</h3>
+          <div class="chart-box">
+            <p class="deck-hint">${escapeHtml(t('stats.chart.assignments'))}</p>
+            <canvas id="teacher-stats-chart"></canvas>
+          </div>
+          ${
+            statsRows
+              ? `<table class="stats-table">
+            <thead>
+              <tr>
+                <th>${escapeHtml(t('stats.table.student'))}</th>
+                <th>${escapeHtml(t('stats.table.assignment'))}</th>
+                <th>${escapeHtml(t('stats.table.score'))}</th>
+                <th>${escapeHtml(t('stats.table.status'))}</th>
+              </tr>
+            </thead>
+            <tbody>${statsRows}</tbody>
+          </table>`
+              : `<p class="empty-msg">${escapeHtml(t('stats.noData'))}</p>`
+          }
+        </section>
       </main>
     `),
   );
+
+  // bar chart: середній бал по завданнях
+  const classAssignments = stats?.assignments || [];
+  const hasScores = classAssignments.some((a) => a.avg_score !== null);
+  const chartCanvas = root.querySelector('#teacher-stats-chart');
+  if (hasScores) {
+    renderBarChart(
+      chartCanvas,
+      classAssignments.map((a) => a.title),
+      classAssignments.map((a) => a.avg_score || 0),
+      t('stats.table.score'),
+    );
+  }
+
   bindLogout(root, navigate);
   root.querySelector('#back').addEventListener('click', () => navigate('teacher-dashboard'));
   root.querySelector('#new-assignment').addEventListener('click', () => navigate('teacher-create-assignment'));
