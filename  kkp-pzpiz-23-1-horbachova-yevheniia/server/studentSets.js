@@ -2,7 +2,6 @@ import { Router } from 'express';
 import { getDb } from './db.js';
 import { requireAuth } from './auth.js';
 import { requireStudent } from './middleware.js';
-import { shuffleArray } from './helpers.js';
 
 const router = Router();
 const MAX_CARDS_PER_SET = 50; // максимум карток в одному наборі
@@ -24,25 +23,6 @@ function getOwnedCard(cardId, studentId) {
        WHERE sc.id = ? AND ss.student_id = ?`,
     )
     .get(cardId, studentId);
-}
-
-// будуємо одне питання тесту: правильний переклад + 3 неправильні
-function buildQuestion(card, allCards) {
-  const distractors = shuffleArray(
-    allCards.filter((c) => c.id !== card.id).map((c) => c.translation),
-  ).slice(0, 3);
-
-  while (distractors.length < 3) {
-    distractors.push(`— ${distractors.length + 1}`);
-  }
-
-  const options = shuffleArray([card.translation, ...distractors.slice(0, 3)]);
-  return {
-    word_card_id: card.id,
-    word: card.word,
-    image_url: card.image_url,
-    options,
-  };
 }
 
 // список усіх наборів учня
@@ -343,107 +323,6 @@ router.get('/my-sets/:id/review-errors', requireAuth, requireStudent, (req, res)
     .all(req.user.id, setId);
 
   return res.json({ set_id: setId, language: set.language, cards });
-});
-
-// створюємо тест зі списком питань
-router.get('/my-sets/:id/test', requireAuth, requireStudent, (req, res) => {
-  const setId = Number(req.params.id);
-  if (!Number.isInteger(setId) || setId < 1) {
-    return res.status(400).json({ error: 'Невірний id набору' });
-  }
-
-  const set = getOwnedSet(setId, req.user.id);
-  if (!set) return res.status(404).json({ error: 'Набір не знайдено' });
-
-  const cards = getDb()
-    .prepare('SELECT * FROM student_word_cards WHERE student_set_id = ? ORDER BY id')
-    .all(setId);
-
-  if (cards.length < 1) {
-    return res.status(400).json({ error: 'У наборі немає карток для тесту' });
-  }
-
-  const questions = shuffleArray(cards).map((card) => buildQuestion(card, cards));
-
-  return res.json({ set_id: setId, title: set.title, questions });
-});
-
-// приймаємо відповіді, рахуємо бал і зберігаємо результат
-router.post('/my-sets/:id/test/submit', requireAuth, requireStudent, (req, res) => {
-  const setId = Number(req.params.id);
-  if (!Number.isInteger(setId) || setId < 1) {
-    return res.status(400).json({ error: 'Невірний id набору' });
-  }
-
-  const set = getOwnedSet(setId, req.user.id);
-  if (!set) return res.status(404).json({ error: 'Набір не знайдено' });
-
-  const answers = Array.isArray(req.body.answers) ? req.body.answers : [];
-  if (answers.length < 1) {
-    return res.status(400).json({ error: 'Надішліть answers[]' });
-  }
-
-  const db = getDb();
-  const cards = db
-    .prepare('SELECT id, word, translation FROM student_word_cards WHERE student_set_id = ?')
-    .all(setId);
-  const byId = new Map(cards.map((c) => [c.id, c]));
-
-  let correct = 0;
-  const wrongWords = [];
-
-  const upsertProgress = db.prepare(
-    `INSERT INTO student_word_progress (student_id, student_card_id, status, correct_count, wrong_count, last_reviewed_at)
-     VALUES (?, ?, ?, ?, ?, datetime('now'))
-     ON CONFLICT(student_id, student_card_id) DO UPDATE SET
-       status = excluded.status,
-       correct_count = student_word_progress.correct_count + excluded.correct_count,
-       wrong_count = student_word_progress.wrong_count + excluded.wrong_count,
-       last_reviewed_at = datetime('now')`,
-  );
-
-  const tx = db.transaction(() => {
-    for (const ans of answers) {
-      const cardId = Number(ans.word_card_id);
-      const selected = String(ans.selected_translation || '').trim();
-      const card = byId.get(cardId);
-      if (!card) continue;
-
-      const isCorrect = selected === card.translation;
-      if (isCorrect) {
-        correct += 1;
-        upsertProgress.run(req.user.id, cardId, 'know', 1, 0);
-      } else {
-        wrongWords.push({
-          word_card_id: card.id,
-          word: card.word,
-          correct_translation: card.translation,
-          selected_translation: selected,
-        });
-        upsertProgress.run(req.user.id, cardId, 'repeat', 0, 1);
-      }
-    }
-
-    const total = answers.length;
-    const wrong = total - correct;
-    const score = total > 0 ? Math.round((correct / total) * 100) : 0;
-
-    db.prepare(
-      `INSERT INTO student_test_results (student_id, student_set_id, score, total_words, correct_answers, wrong_answers)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-    ).run(req.user.id, setId, score, total, correct, wrong);
-
-    return { score, total, correct, wrong, wrongWords };
-  });
-
-  const result = tx();
-  return res.json({
-    score: result.score,
-    total: result.total,
-    correct_answers: result.correct,
-    wrong_answers: result.wrong,
-    wrong_words: result.wrongWords,
-  });
 });
 
 export default router;
