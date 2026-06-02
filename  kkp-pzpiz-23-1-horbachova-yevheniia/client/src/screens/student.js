@@ -8,6 +8,7 @@ import {
   normalizeAnswer,
   speakWord,
   speechSupported,
+  formatExampleHtml,
 } from '../utils.js';
 import { appState, resetStudyState, resetTestState, resetFlashState } from '../state.js';
 import { headerBar, bindLogout } from './auth.js';
@@ -230,8 +231,10 @@ export async function renderStudentSet(root, navigate) {
             <input name="word" placeholder="${escapeHtml(t('teacher.placeholder.word'))}" required />
             <input name="translation" placeholder="${escapeHtml(t('teacher.placeholder.translation'))}" required />
             <input name="image_url" type="url" placeholder="${escapeHtml(t('teacher.placeholder.imageUrl'))}" />
+            <input name="example" placeholder="${escapeHtml(t('teacher.placeholder.example'))}" />
             <button type="submit" class="btn btn--secondary btn--sm">${escapeHtml(t('teacher.btn.add'))}</button>
           </form>
+          <p class="hint">${escapeHtml(t('teacher.placeholder.exampleHint'))}</p>
           <p id="card-err" class="err"></p>
         </section>
         ${cardList ? `<ul class="sets">${cardList}</ul>` : `<p class="empty-msg">${escapeHtml(t('teacher.noCards'))}</p>`}
@@ -266,6 +269,7 @@ export async function renderStudentSet(root, navigate) {
           word: String(fd.get('word') || ''),
           translation: String(fd.get('translation') || ''),
           image_url: String(fd.get('image_url') || ''),
+          example: String(fd.get('example') || ''),
         }),
       });
       e.target.reset();
@@ -465,23 +469,31 @@ export async function renderFlashcards(root, navigate) {
     appState.flashLanguage = data.language || (data.set && data.set.language) || '';
     appState.flashIndex = 0;
     appState.flashFlipped = false;
+    appState.flashLearned = 0;
+    appState.flashRepeats = 0;
   }
 
+  const totalCards = appState.flashCards.length;
   const queue = appState.flashQueue;
-  const total = queue.length;
+  // картка вважається вивченою тільки після відповіді "Знаю"
   const idx = queue[appState.flashIndex];
   const card = appState.flashCards[idx];
-  const done = !card || total === 0;
+  const done = !card || totalCards === 0;
 
   let body;
   if (done) {
-    const msg = total === 0 ? t('student.study.noWords') : t('student.flash.done');
+    const msg = totalCards === 0 ? t('student.study.noWords') : t('student.flash.done');
     body = `<p class="study-done-msg">${escapeHtml(msg)}</p>
+      ${
+        totalCards === 0
+          ? ''
+          : `<p class="study-done-counter">${escapeHtml(t('student.flash.learnedLabel'))}: <strong>${appState.flashLearned}</strong> / <strong>${totalCards}</strong></p>`
+      }
       <button type="button" id="back-flash" class="btn btn--primary">${escapeHtml(t('student.study.back'))}</button>`;
   } else if (appState.flashFlipped) {
     // зворотна сторона: переклад + три кнопки
     body = `
-      <p class="counter">${appState.flashIndex + 1} / ${total}</p>
+      <p class="counter">${t('student.flash.progress', { learned: appState.flashLearned, total: totalCards })}</p>
       <div class="flashcard flashcard--flipped" id="flashcard">
         <p class="card-tr">${escapeHtml(card.translation)}</p>
       </div>
@@ -493,11 +505,11 @@ export async function renderFlashcards(root, navigate) {
   } else {
     // лицьова сторона: слово + фото + звук + приклад
     body = `
-      <p class="counter">${appState.flashIndex + 1} / ${total}</p>
+      <p class="counter">${t('student.flash.progress', { learned: appState.flashLearned, total: totalCards })}</p>
       <div class="flashcard" id="flashcard">
         ${card.image_url ? `<img class="card-image" src="${escapeHtml(card.image_url)}" alt="${escapeHtml(card.word)}" />` : ''}
         <p class="card-term">${escapeHtml(card.word)}</p>
-        ${card.example ? `<p class="card-example">${escapeHtml(card.example)}</p>` : ''}
+        ${card.example ? `<p class="card-example">${formatExampleHtml(card.example)}</p>` : ''}
         ${speechSupported() ? `<button type="button" id="speak-word" class="btn btn--ghost btn--sm">🔊 ${escapeHtml(t('student.study.listen'))}</button>` : ''}
       </div>
       <p class="study-hint">${escapeHtml(t('student.flash.tapToFlip'))}</p>`;
@@ -545,6 +557,16 @@ export async function renderFlashcards(root, navigate) {
         });
       } catch {
       }
+
+      if (status === 'know') {
+        // слово вивчено — більше не показуємо
+        appState.flashLearned += 1;
+      } else {
+        // "Потрібно повторити" або "Не знаю" — повертаємо картку в кінець черги
+        appState.flashQueue.push(idx);
+        appState.flashRepeats += 1;
+      }
+
       appState.flashIndex += 1;
       appState.flashFlipped = false;
       renderFlashcards(root, navigate);

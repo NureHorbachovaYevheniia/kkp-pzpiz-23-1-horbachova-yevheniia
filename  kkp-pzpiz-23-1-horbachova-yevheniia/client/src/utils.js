@@ -12,6 +12,25 @@ export function escapeHtml(s) {
     .replace(/"/g, '&quot;');
 }
 
+//слово в лапках стає помаранчевим
+export function formatExampleHtml(example) {
+  const text = String(example ?? '').trim();
+  if (!text) return '';
+
+  const parts = text.split(/(«[^»]+»|"[^"]+")/g);
+  let html = '';
+  for (const part of parts) {
+    if (!part) continue;
+    if ((part.startsWith('«') && part.endsWith('»')) || (part.startsWith('"') && part.endsWith('"'))) {
+      const word = part.slice(1, -1);
+      html += `<span class="example-word">${escapeHtml(word)}</span>`;
+    } else {
+      html += escapeHtml(part);
+    }
+  }
+  return html;
+}
+
 import { getDateLocale, t } from './i18n.js';
 
 export function formatDate(iso) {

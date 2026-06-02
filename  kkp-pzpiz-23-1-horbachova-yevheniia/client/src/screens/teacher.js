@@ -391,8 +391,10 @@ export async function renderTeacherWordSet(root, navigate) {
             <input name="word" placeholder="${escapeHtml(t('teacher.placeholder.word'))}" required />
             <input name="translation" placeholder="${escapeHtml(t('teacher.placeholder.translation'))}" required />
             <input name="image_url" type="url" placeholder="${escapeHtml(t('teacher.placeholder.imageUrl'))}" />
+            <input name="example" placeholder="${escapeHtml(t('teacher.placeholder.example'))}" />
             <button type="submit" class="btn btn--secondary btn--sm">${escapeHtml(t('teacher.btn.add'))}</button>
           </form>
+          <p class="hint">${escapeHtml(t('teacher.placeholder.exampleHint'))}</p>
           <p id="card-err" class="err"></p>
         </section>
         ${cardList ? `<ul class="sets">${cardList}</ul>` : `<p class="empty-msg">${escapeHtml(t('teacher.noCards'))}</p>`}
@@ -418,6 +420,7 @@ export async function renderTeacherWordSet(root, navigate) {
           word: String(fd.get('word') || ''),
           translation: String(fd.get('translation') || ''),
           image_url: String(fd.get('image_url') || ''),
+          example: String(fd.get('example') || ''),
         }),
       });
       e.target.reset();

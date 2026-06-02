@@ -19,6 +19,8 @@ export const appState = {
   flashLanguage: '',
   flashIndex: 0,
   flashFlipped: false,
+  flashLearned: 0,
+  flashRepeats: 0,
   testQuestions: null,
   testAnswers: null,
   testIndex: 0,
@@ -44,6 +46,8 @@ export function resetFlashState() {
   appState.flashLanguage = '';
   appState.flashIndex = 0;
   appState.flashFlipped = false;
+  appState.flashLearned = 0;
+  appState.flashRepeats = 0;
 }
 
 export function resetTestState() {

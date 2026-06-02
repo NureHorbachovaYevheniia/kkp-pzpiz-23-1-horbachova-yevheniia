@@ -695,7 +695,11 @@ h1 {
   margin: 0.5rem 0 0;
   font-size: 0.9rem;
   color: var(--text-muted);
-  font-style: italic;
+}
+
+.example-word {
+  color: var(--orange);
+  font-weight: 700;
 }
 
 .study-hint {

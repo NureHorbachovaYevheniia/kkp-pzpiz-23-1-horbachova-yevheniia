@@ -1,9 +1,119 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import bcrypt from 'bcrypt';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// демо-картки для flash-card
+const FLASH_DEMO_CARDS = [
+  {
+    word: 'apple',
+    translation: 'яблуко',
+    image_url: 'https://picsum.photos/seed/apple/400/280',
+    example: 'I eat an «apple» every day.',
+  },
+  {
+    word: 'dog',
+    translation: 'собака',
+    image_url: 'https://picsum.photos/seed/dog/400/280',
+    example: 'My «dog» runs in the park.',
+  },
+  {
+    word: 'book',
+    translation: 'книга',
+    image_url: 'https://picsum.photos/seed/book/400/280',
+    example: 'She reads a «book» before sleep.',
+  },
+  {
+    word: 'water',
+    translation: 'вода',
+    image_url: 'https://picsum.photos/seed/water/400/280',
+    example: 'Please drink more «water».',
+  },
+  {
+    word: 'house',
+    translation: 'будинок',
+    image_url: 'https://picsum.photos/seed/house/400/280',
+    example: 'They live in a big «house».',
+  },
+  {
+    word: 'sun',
+    translation: 'сонце',
+    image_url: 'https://picsum.photos/seed/sun/400/280',
+    example: 'The «sun» is bright today.',
+  },
+  {
+    word: 'friend',
+    translation: 'друг',
+    image_url: 'https://picsum.photos/seed/friend/400/280',
+    example: 'He is my best «friend».',
+  },
+  {
+    word: 'music',
+    translation: 'музика',
+    image_url: 'https://picsum.photos/seed/music/400/280',
+    example: 'I listen to «music» every morning.',
+  },
+];
+
+const STUDENT_FLASH_SET_TITLE = 'Flash cards: базова лексика';
+
+function insertStudentFlashSet(database, studentId) {
+  const set = database
+    .prepare('INSERT INTO student_word_sets (student_id, title, language) VALUES (?, ?, ?)')
+    .run(studentId, STUDENT_FLASH_SET_TITLE, 'English');
+  const setId = set.lastInsertRowid;
+
+  const ins = database.prepare(
+    `INSERT INTO student_word_cards (student_set_id, word, translation, image_url, example)
+     VALUES (?, ?, ?, ?, ?)`,
+  );
+  for (const c of FLASH_DEMO_CARDS) {
+    ins.run(setId, c.word, c.translation, c.image_url, c.example);
+  }
+}
+
+// якщо база вже є — додаємо демо-набір учню, якщо його ще немає
+export function seedStudentFlashDemoIfMissing(database) {
+  const student = database
+    .prepare("SELECT id FROM users WHERE email = 'student1@learnly.local'")
+    .get();
+  if (!student) return;
+
+  const exists = database
+    .prepare('SELECT id FROM student_word_sets WHERE student_id = ? AND title = ?')
+    .get(student.id, STUDENT_FLASH_SET_TITLE);
+  if (exists) return;
+
+  insertStudentFlashSet(database, student.id);
+}
+
+// оновлюємо набір вчителя, якщо там ще немає прикладів (для старих баз)
+export function seedTeacherFlashDemoIfMissing(database) {
+  const teacher = database
+    .prepare("SELECT id FROM users WHERE email = 'teacher@learnly.local'")
+    .get();
+  if (!teacher) return;
+
+  const set = database
+    .prepare('SELECT id FROM word_sets WHERE teacher_id = ? ORDER BY id LIMIT 1')
+    .get(teacher.id);
+  if (!set) return;
+
+  const withExample = database
+    .prepare('SELECT id FROM word_cards WHERE word_set_id = ? AND example IS NOT NULL LIMIT 1')
+    .get(set.id);
+  if (withExample) return;
+
+  database.prepare('DELETE FROM word_cards WHERE word_set_id = ?').run(set.id);
+  database
+    .prepare('UPDATE word_sets SET title = ?, language = ? WHERE id = ?')
+    .run('Flash cards: базова лексика', 'English', set.id);
+
+  const ins = database.prepare(
+    `INSERT INTO word_cards (word_set_id, word, translation, image_url, example)
+     VALUES (?, ?, ?, ?, ?)`,
+  );
+  for (const c of FLASH_DEMO_CARDS) {
+    ins.run(set.id, c.word, c.translation, c.image_url, c.example);
+  }
+}
 
 export function seedDemoIfEmpty(database) {
   const n = database.prepare('SELECT COUNT(*) AS n FROM users').get().n;
@@ -47,16 +157,18 @@ export function seedDemoIfEmpty(database) {
 
     const set = database
       .prepare('INSERT INTO word_sets (teacher_id, title, language) VALUES (?, ?, ?)')
-      .run(teacherId, '100 поширених слів', 'English');
+      .run(teacherId, 'Flash cards: базова лексика', 'English');
     const setId = set.lastInsertRowid;
 
-    const words = loadDemoWords();
     const ins = database.prepare(
-      'INSERT INTO word_cards (word_set_id, word, translation) VALUES (?, ?, ?)',
+      `INSERT INTO word_cards (word_set_id, word, translation, image_url, example)
+       VALUES (?, ?, ?, ?, ?)`,
     );
-    for (const w of words) {
-      ins.run(setId, w.word, w.translation);
+    for (const c of FLASH_DEMO_CARDS) {
+      ins.run(setId, c.word, c.translation, c.image_url, c.example);
     }
+
+    insertStudentFlashSet(database, s1.lastInsertRowid);
 
     const start = new Date();
     const deadline = new Date(start);
@@ -70,7 +182,7 @@ export function seedDemoIfEmpty(database) {
       .run(
         classId,
         setId,
-        'Тиждень 1: базова лексика',
+        'Тиждень 1: flash cards',
         start.toISOString().slice(0, 10),
         deadline.toISOString().slice(0, 10),
         'mixed',
@@ -79,24 +191,4 @@ export function seedDemoIfEmpty(database) {
   });
 
   tx();
-}
-
-function loadDemoWords() {
-  const seedPath = path.join(__dirname, 'seeds', '05-common-100.json');
-  try {
-    const raw = JSON.parse(fs.readFileSync(seedPath, 'utf8'));
-    const words = raw.sets?.[0]?.words || [];
-    return words.slice(0, 15).map((w) => ({
-      word: w.term,
-      translation: w.translation,
-    }));
-  } catch {
-    return [
-      { word: 'hello', translation: 'привіт' },
-      { word: 'book', translation: 'книга' },
-      { word: 'water', translation: 'вода' },
-      { word: 'time', translation: 'час' },
-      { word: 'world', translation: 'світ' },
-    ];
-  }
 }
