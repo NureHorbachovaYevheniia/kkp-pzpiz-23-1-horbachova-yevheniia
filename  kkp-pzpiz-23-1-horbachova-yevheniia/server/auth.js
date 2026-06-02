@@ -47,8 +47,12 @@ router.post('/register', (req, res) => {
   // відповіді з опитування
   const surveyLanguage = String(req.body.survey_language || '').trim().slice(0, 100);
   const surveyLevel = String(req.body.survey_level || '').trim().slice(0, 100);
+  const consent = req.body.consent === true;
 
   // перевіряємо дані з форми
+  if (!consent) {
+    return res.status(400).json({ error: 'Потрібна згода на обробку даних' });
+  }
   if (name.length < 2 || name.length > 100) {
     return res.status(400).json({ error: 'Ім\'я 2–100 символів' });
   }
@@ -68,7 +72,7 @@ router.post('/register', (req, res) => {
   try {
     const info = getDb()
       .prepare(
-        'INSERT INTO users (name, email, password_hash, role, survey_language, survey_level) VALUES (?, ?, ?, ?, ?, ?)',
+        'INSERT INTO users (name, email, password_hash, role, survey_language, survey_level, consent_at) VALUES (?, ?, ?, ?, ?, ?, datetime(\'now\'))',
       )
       .run(name, email, password_hash, role, surveyLanguage, surveyLevel);
     return res.status(201).json({ id: info.lastInsertRowid, name, email, role });
