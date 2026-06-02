@@ -7,6 +7,7 @@ import wordSetsRouter from './wordSets.js';
 import assignmentsRouter from './assignments.js';
 import studyRouter from './study.js';
 import testsRouter from './tests.js';
+import studentSetsRouter from './studentSets.js';
 
 // створюємо базу і таблиці
 initDb();
@@ -39,6 +40,7 @@ app.use('/api', wordSetsRouter);
 app.use('/api', assignmentsRouter);
 app.use('/api', studyRouter);
 app.use('/api', testsRouter);
+app.use('/api', studentSetsRouter);
 
 app.listen(PORT, () => {
   console.log('http://localhost:' + PORT);
