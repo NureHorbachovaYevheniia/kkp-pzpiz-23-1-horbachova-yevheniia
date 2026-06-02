@@ -1,4 +1,7 @@
 // Головний файл сервера. Тут запускаємо Express і підключаємо всі маршрути.
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import express from 'express';
 import { initDb, getDb } from './db.js';
 import authRouter from './auth.js';
@@ -14,6 +17,10 @@ initDb();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const requestLogPath = path.join(__dirname, 'data', 'request.log');
+fs.mkdirSync(path.dirname(requestLogPath), { recursive: true });
 
 // не приймаємо JSON більше 100 КБ
 app.use(express.json({ limit: '100kb' }));
@@ -56,6 +63,27 @@ app.use((req, res, next) => {
 });
 
 app.options('*', (req, res) => res.sendStatus(204));
+
+// кожен запит записується в data/request.log
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const ms = Date.now() - start;
+    const line =
+      new Date().toISOString() +
+      ' ' +
+      req.method +
+      ' ' +
+      req.originalUrl +
+      ' ' +
+      res.statusCode +
+      ' ' +
+      ms +
+      'ms\n';
+    fs.appendFileSync(requestLogPath, line);
+  });
+  next();
+});
 
 // перевірка
 app.get('/health', (req, res) => {
