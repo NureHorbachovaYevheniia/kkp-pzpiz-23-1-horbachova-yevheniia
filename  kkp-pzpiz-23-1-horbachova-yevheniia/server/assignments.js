@@ -12,14 +12,23 @@ import {
 
 const router = Router();
 
+function studyPlaceholderDates() {
+  const today = new Date().toISOString().slice(0, 10);
+  const far = new Date();
+  far.setFullYear(far.getFullYear() + 10);
+  return { startDate: today, deadline: far.toISOString().slice(0, 10) };
+}
+
 // створити завдання для класу
 router.post('/assignments', requireAuth, requireTeacher, (req, res) => {
   const classId = Number(req.body.class_id);
   const wordSetId = Number(req.body.word_set_id);
   const title = String(req.body.title || '').trim();
-  const startDate = String(req.body.start_date || '').trim();
-  const deadline = String(req.body.deadline || '').trim();
-  const mode = 'study';
+  const assignTest =
+    req.body.assign_test === true ||
+    req.body.assign_test === 'true' ||
+    req.body.assign_test === 1 ||
+    req.body.assign_test === '1';
 
   if (!Number.isInteger(classId) || classId < 1) {
     return res.status(400).json({ error: 'Невірний class_id' });
@@ -30,9 +39,27 @@ router.post('/assignments', requireAuth, requireTeacher, (req, res) => {
   if (title.length < 1 || title.length > 200) {
     return res.status(400).json({ error: 'Назва завдання 1–200 символів' });
   }
-  if (!startDate || !deadline) {
-    return res.status(400).json({ error: 'Вкажіть start_date і deadline (YYYY-MM-DD)' });
+
+  let mode = 'study';
+  let testStart = null;
+  let deadline;
+  const placeholders = studyPlaceholderDates();
+
+  if (assignTest) {
+    testStart = String(req.body.test_start || '').trim();
+    deadline = String(req.body.deadline || '').trim();
+    if (!testStart || !deadline) {
+      return res.status(400).json({ error: 'Вкажіть дату початку і дедлайн тесту' });
+    }
+    if (datetimeValue(deadline) <= datetimeValue(testStart)) {
+      return res.status(400).json({ error: 'Дедлайн має бути після початку тесту' });
+    }
+    mode = 'test';
+  } else {
+    deadline = placeholders.deadline;
   }
+
+  const startDate = placeholders.startDate;
   const db = getDb();
   const cls = getClassForTeacher(classId, req.user.id);
   if (!cls) return res.status(404).json({ error: 'Клас не знайдено' });
@@ -44,10 +71,10 @@ router.post('/assignments', requireAuth, requireTeacher, (req, res) => {
 
   const info = db
     .prepare(
-      `INSERT INTO assignments (class_id, word_set_id, title, start_date, deadline, mode, status)
-       VALUES (?, ?, ?, ?, ?, ?, 'active')`,
+      `INSERT INTO assignments (class_id, word_set_id, title, start_date, deadline, test_start, mode, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'active')`,
     )
-    .run(classId, wordSetId, title, startDate, deadline, mode);
+    .run(classId, wordSetId, title, startDate, deadline, testStart, mode);
 
   const row = db.prepare('SELECT * FROM assignments WHERE id = ?').get(info.lastInsertRowid);
   return res.status(201).json(row);

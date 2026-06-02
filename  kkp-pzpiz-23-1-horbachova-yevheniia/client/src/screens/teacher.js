@@ -25,10 +25,14 @@ function testStartInputValue() {
   return d.toISOString().slice(0, 16);
 }
 
+function testEndInputValue() {
+  const d = new Date(Date.now() + 7 * 86400000);
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0, 16);
+}
+
 function teacherTestDatesMeta(a) {
-  if (a.mode !== 'test' || !a.test_start) {
-    return `<span class="${deadlineAccentClass(a.deadline)}">${escapeHtml(t('teacher.deadlineUntil', { date: formatDate(a.deadline) }))}</span>`;
-  }
+  if (a.mode !== 'test' || !a.test_start) return '';
   return `<span class="${deadlineAccentClass(a.test_start)}">${escapeHtml(t('teacher.testStartsAt', { date: formatDate(a.test_start) }))}</span> · <span class="${deadlineAccentClass(a.deadline)}">${escapeHtml(t('teacher.deadlineUntil', { date: formatDate(a.deadline) }))}</span>`;
 }
 
@@ -211,10 +215,11 @@ export async function renderTeacherClass(root, navigate) {
     .map((s) => `<li>${escapeHtml(s.name)} (${escapeHtml(s.email)})</li>`)
     .join('');
   const assignments = (data.assignments || [])
-    .map(
-      (a) => `<li class="set-row">
+    .map((a) => {
+      const datesMeta = teacherTestDatesMeta(a);
+      return `<li class="set-row">
         <span class="set-title">${escapeHtml(a.title)}</span>
-        <span class="meta">${escapeHtml(a.word_set_title)} · ${teacherTestDatesMeta(a)} · ${escapeHtml(statusLabel(a.mode))}</span>
+        <span class="meta">${escapeHtml(a.word_set_title)}${datesMeta ? ' · ' + datesMeta : ''} · ${escapeHtml(statusLabel(a.mode))}</span>
         ${
           a.mode === 'test'
             ? a.status === 'active'
@@ -226,8 +231,8 @@ export async function renderTeacherClass(root, navigate) {
                </span>
                <button type="button" class="btn btn--secondary btn--sm activate-test" data-id="${a.id}">${escapeHtml(t('teacher.activateTest'))}</button>`
         }
-      </li>`,
-    )
+      </li>`;
+    })
     .join('');
 
   // таблиця: учень | завдання | бал | статус
@@ -566,8 +571,8 @@ export async function renderTeacherCreateAssignment(root, navigate) {
   const setOpts = (sets || [])
     .map((s) => `<option value="${s.id}">${escapeHtml(s.title)}</option>`)
     .join('');
-  const today = new Date().toISOString().slice(0, 10);
-  const deadline = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
+  const testStartDefault = testStartInputValue();
+  const testEndDefault = testEndInputValue();
 
   root.replaceChildren(
     el(`
@@ -578,9 +583,15 @@ export async function renderTeacherCreateAssignment(root, navigate) {
           <label>${escapeHtml(t('teacher.assign.class'))} <select name="class_id" required>${classOpts}</select></label>
           <label>${escapeHtml(t('teacher.assign.wordSet'))} <select name="word_set_id" required>${setOpts}</select></label>
           <label>${escapeHtml(t('teacher.assign.name'))} <input name="title" required placeholder="${escapeHtml(t('teacher.assign.namePlaceholder'))}" /></label>
-          <label>${escapeHtml(t('teacher.assign.start'))} <input name="start_date" type="date" value="${today}" required /></label>
-          <label>${escapeHtml(t('teacher.assign.deadline'))} <input name="deadline" type="date" value="${deadline}" required /></label>
-          <p class="hint">Спочатку учням доступні тільки картки і навчання. Тест можна активувати потім у класі.</p>
+          <label class="checkbox-row">
+            <input type="checkbox" name="assign_test" id="assign-test" />
+            <span>${escapeHtml(t('teacher.assign.withTest'))}</span>
+          </label>
+          <div id="assign-test-dates" class="test-schedule" hidden>
+            <label>${escapeHtml(t('teacher.assign.testStart'))} <input name="test_start" type="datetime-local" value="${escapeHtml(testStartDefault)}" /></label>
+            <label>${escapeHtml(t('teacher.assign.testEnd'))} <input name="test_deadline" type="datetime-local" value="${escapeHtml(testEndDefault)}" /></label>
+          </div>
+          <p class="hint">${escapeHtml(t('teacher.assign.hint'))}</p>
           <button type="submit" class="btn btn--primary">${escapeHtml(t('teacher.assign.submit'))}</button>
         </form>
         <p id="assign-err" class="err"></p>
@@ -591,12 +602,25 @@ export async function renderTeacherCreateAssignment(root, navigate) {
   if (appState.classId) {
     root.querySelector('[name=class_id]').value = String(appState.classId);
   }
+  const testCheckbox = root.querySelector('#assign-test');
+  const testDatesBox = root.querySelector('#assign-test-dates');
+  testCheckbox.addEventListener('change', () => {
+    testDatesBox.hidden = !testCheckbox.checked;
+  });
+
   root.querySelector('#back').addEventListener('click', () => navigate('teacher-class'));
   root.querySelector('#assign-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const errEl = root.querySelector('#assign-err');
     errEl.textContent = '';
     const fd = new FormData(e.target);
+    const assignTest = !!fd.get('assign_test');
+    const test_start = String(fd.get('test_start') || '').trim();
+    const deadline = String(fd.get('test_deadline') || '').trim();
+    if (assignTest && (!test_start || !deadline)) {
+      errEl.textContent = t('api.testDatesRequired');
+      return;
+    }
     try {
       await api('/api/assignments', {
         method: 'POST',
@@ -604,9 +628,9 @@ export async function renderTeacherCreateAssignment(root, navigate) {
           class_id: Number(fd.get('class_id')),
           word_set_id: Number(fd.get('word_set_id')),
           title: String(fd.get('title') || ''),
-          start_date: String(fd.get('start_date') || ''),
-          deadline: String(fd.get('deadline') || ''),
-          mode: 'study',
+          assign_test: assignTest,
+          test_start: assignTest ? test_start : undefined,
+          deadline: assignTest ? deadline : undefined,
         }),
       });
       appState.classId = Number(fd.get('class_id'));

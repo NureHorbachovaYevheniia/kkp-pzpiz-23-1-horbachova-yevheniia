@@ -157,7 +157,7 @@ const messages = {
     'teacher.editClassTitle': 'Редагувати клас',
     'teacher.deleteClassConfirm':
       'Видалити клас разом з усіма завданнями та списком учнів?',
-    'teacher.newAssignment': 'Завдання',
+    'teacher.newAssignment': 'Призначити завдання',
     'teacher.deadlineUntil': 'до {date}',
     'teacher.testStart': 'Початок тесту',
     'teacher.testDeadline': 'Дедлайн',
@@ -178,8 +178,11 @@ const messages = {
     'teacher.assign.wordSet': 'Набір слів',
     'teacher.assign.name': 'Назва',
     'teacher.assign.namePlaceholder': 'Назва завдання',
-    'teacher.assign.start': 'Початок',
-    'teacher.assign.deadline': 'Дедлайн',
+    'teacher.assign.withTest': 'Задати тест',
+    'teacher.assign.testStart': 'Початок тесту',
+    'teacher.assign.testEnd': 'Кінець тесту',
+    'teacher.assign.hint':
+      'Без тесту учні працюють з картками та навчанням. Тест можна також увімкнути пізніше в класі.',
     'teacher.assign.mode': 'Режим',
     'teacher.assign.submit': 'Створити завдання',
 
@@ -452,7 +455,7 @@ const messages = {
     'teacher.editClassTitle': 'Edit class',
     'teacher.deleteClassConfirm':
       'Delete this class with all assignments and the student list?',
-    'teacher.newAssignment': 'Assignment',
+    'teacher.newAssignment': 'Assign assignment',
     'teacher.deadlineUntil': 'due {date}',
     'teacher.testStart': 'Test start',
     'teacher.testDeadline': 'Deadline',
@@ -473,8 +476,11 @@ const messages = {
     'teacher.assign.wordSet': 'Word set',
     'teacher.assign.name': 'Title',
     'teacher.assign.namePlaceholder': 'Assignment title',
-    'teacher.assign.start': 'Start date',
-    'teacher.assign.deadline': 'Deadline',
+    'teacher.assign.withTest': 'Schedule a test',
+    'teacher.assign.testStart': 'Test start',
+    'teacher.assign.testEnd': 'Test end',
+    'teacher.assign.hint':
+      'Without a test, students use flashcards and study mode. You can also enable a test later from the class page.',
     'teacher.assign.mode': 'Mode',
     'teacher.assign.submit': 'Create assignment',
 
