@@ -166,6 +166,10 @@ export function renderRegisterSurvey(root, navigate) {
             <input name="language" type="text" maxlength="100" placeholder="${escapeHtml(t('survey.langPlaceholder'))}" required />
           </label>
           ${secondQuestion}
+          <label class="checkbox-row">
+            <input name="consent" type="checkbox" required />
+            ${escapeHtml(t('register.consent'))}
+          </label>
           <button type="submit" class="btn btn--primary btn--block">${escapeHtml(t('survey.finish'))}</button>
         </form>
         <p class="hint"><button type="button" id="survey-back" class="btn btn--ghost btn--sm">${escapeHtml(t('btn.back'))}</button></p>
@@ -179,6 +183,11 @@ export function renderRegisterSurvey(root, navigate) {
     e.preventDefault();
     err.textContent = '';
     const fd = new FormData(e.target);
+    const consent = fd.get('consent') === 'on';
+    if (!consent) {
+      err.textContent = t('error.consentRequired');
+      return;
+    }
     try {
       await api('/api/auth/register', {
         method: 'POST',
@@ -187,6 +196,7 @@ export function renderRegisterSurvey(root, navigate) {
           email: reg.email,
           password: reg.password,
           role: reg.role,
+          consent: true,
           survey_language: String(fd.get('language') || ''),
           survey_level: String(fd.get('level') || ''),
         }),
