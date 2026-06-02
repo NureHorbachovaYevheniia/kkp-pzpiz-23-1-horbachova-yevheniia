@@ -698,29 +698,14 @@ export function renderTestResults(root, navigate) {
     navigate('student-dashboard');
     return;
   }
-  const wrong = (r.wrong_words || [])
-    .map(
-      (w) =>
-        `<li>${escapeHtml(
-          t('student.testResults.wrongLine', {
-            word: w.word,
-            translation: w.correct_translation,
-          }),
-        )}</li>`,
-    )
-    .join('');
 
   root.replaceChildren(
     el(`
       <main class="box box--wide">
         ${headerBar(appState.user, null, `<button type="button" id="back" class="btn btn--ghost btn--sm">${escapeHtml(t('btn.backCabinet'))}</button>`).outerHTML}
         <h2 class="deck-heading">${escapeHtml(t('student.testResults.title'))}</h2>
-        <p class="study-done-msg">${escapeHtml(t('student.testResults.scoreLabel'))}: <strong>${r.score}%</strong> (${r.correct_answers}/${r.total})</p>
-        ${
-          wrong
-            ? `<section class="deck-section"><h3 class="deck-heading">${escapeHtml(t('student.testResults.reviewWords'))}</h3><ul class="sets">${wrong}</ul></section>`
-            : `<p class="hint">${escapeHtml(t('student.testResults.allCorrect'))}</p>`
-        }
+        <p class="study-done-msg">${escapeHtml(r.message || 'Тест здано.')}</p>
+        <p class="hint">Результат буде доступний викладачу.</p>
         <button type="button" id="done" class="btn btn--primary">${escapeHtml(t('btn.done'))}</button>
       </main>
     `),
