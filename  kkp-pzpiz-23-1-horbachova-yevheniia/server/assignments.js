@@ -18,7 +18,7 @@ router.post('/assignments', requireAuth, requireTeacher, (req, res) => {
   const title = String(req.body.title || '').trim();
   const startDate = String(req.body.start_date || '').trim();
   const deadline = String(req.body.deadline || '').trim();
-  const mode = String(req.body.mode || '').trim();
+  const mode = 'study';
 
   if (!Number.isInteger(classId) || classId < 1) {
     return res.status(400).json({ error: 'Невірний class_id' });
@@ -32,10 +32,6 @@ router.post('/assignments', requireAuth, requireTeacher, (req, res) => {
   if (!startDate || !deadline) {
     return res.status(400).json({ error: 'Вкажіть start_date і deadline (YYYY-MM-DD)' });
   }
-  if (!['study', 'test', 'mixed'].includes(mode)) {
-    return res.status(400).json({ error: 'mode: study, test або mixed' });
-  }
-
   const db = getDb();
   const cls = getClassForTeacher(classId, req.user.id);
   if (!cls) return res.status(404).json({ error: 'Клас не знайдено' });
