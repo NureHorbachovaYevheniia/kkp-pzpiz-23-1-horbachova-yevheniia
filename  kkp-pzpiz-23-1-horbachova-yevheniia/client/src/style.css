@@ -663,6 +663,41 @@ h1 {
   align-items: stretch;
 }
 
+.flashcard {
+  margin: 0 0 1rem;
+  padding: 1.25rem 1rem;
+  min-height: 10rem;
+  text-align: center;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.flashcard--flipped {
+  background: var(--surface-2);
+  cursor: default;
+}
+
+.flashcard .card-term {
+  margin-bottom: 0.5rem;
+}
+
+.flashcard .card-tr {
+  margin: 0;
+  border: none;
+  background: transparent;
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.card-example {
+  margin: 0.5rem 0 0;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
 .study-hint {
   margin: 0.85rem 0 0;
   font-size: 0.82rem;
