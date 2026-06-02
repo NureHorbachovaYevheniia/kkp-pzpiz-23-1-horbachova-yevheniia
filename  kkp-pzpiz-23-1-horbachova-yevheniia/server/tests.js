@@ -115,7 +115,17 @@ router.post('/assignments/:id/test/submit', requireAuth, requireStudent, (req, r
   const cards = db
     .prepare('SELECT id, word, translation FROM word_cards WHERE word_set_id = ?')
     .all(assignment.word_set_id);
-  const byId = new Map(cards.map((c) => [c.id, c]));
+
+  if (cards.length < 1) {
+    return res.status(400).json({ error: 'У наборі немає карток для тесту' });
+  }
+
+  const answersByCard = new Map();
+  for (const ans of answers) {
+    const cardId = Number(ans.word_card_id);
+    if (!Number.isInteger(cardId) || cardId < 1) continue;
+    answersByCard.set(cardId, String(ans.selected_translation || '').trim());
+  }
 
   let correct = 0;
   const wrongWords = [];
@@ -131,28 +141,25 @@ router.post('/assignments/:id/test/submit', requireAuth, requireStudent, (req, r
   );
 
   const tx = db.transaction(() => {
-    for (const ans of answers) {
-      const cardId = Number(ans.word_card_id);
-      const selected = String(ans.selected_translation || '').trim();
-      const card = byId.get(cardId);
-      if (!card) continue;
+    for (const card of cards) {
+      const selected = answersByCard.get(card.id);
+      const isCorrect = selected !== undefined && selected === card.translation;
 
-      const isCorrect = selected === card.translation;
       if (isCorrect) {
         correct += 1;
-        upsertProgress.run(req.user.id, cardId, assignmentId, 'know', 1, 0);
+        upsertProgress.run(req.user.id, card.id, assignmentId, 'know', 1, 0);
       } else {
         wrongWords.push({
           word_card_id: card.id,
           word: card.word,
           correct_translation: card.translation,
-          selected_translation: selected,
+          selected_translation: selected ?? '',
         });
-        upsertProgress.run(req.user.id, cardId, assignmentId, 'repeat', 0, 1);
+        upsertProgress.run(req.user.id, card.id, assignmentId, 'repeat', 0, 1);
       }
     }
 
-    const total = answers.length;
+    const total = cards.length;
     const wrong = total - correct;
     const score = total > 0 ? Math.round((correct / total) * 100) : 0;
 

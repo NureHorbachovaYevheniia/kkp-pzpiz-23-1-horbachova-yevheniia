@@ -1,3 +1,5 @@
+import { getDateLocale, getTimeFormat, t } from './i18n.js';
+
 export function el(html) {
   const t = document.createElement('template');
   t.innerHTML = html.trim();
@@ -30,8 +32,6 @@ export function formatExampleHtml(example) {
   }
   return html;
 }
-
-import { getDateLocale, getTimeFormat, t } from './i18n.js';
 
 function hasTimeComponent(iso) {
   const s = String(iso);
