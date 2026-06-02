@@ -112,6 +112,94 @@ router.post('/login', (req, res) => {
   });
 });
 
+// експорт усіх даних користувача (GDPR)
+router.get('/me/export', requireAuth, (req, res) => {
+  const db = getDb();
+  const userId = req.user.id;
+
+  const profile = db
+    .prepare(
+      `SELECT id, name, email, role, survey_language, survey_level, consent_at, created_at
+       FROM users WHERE id = ?`,
+    )
+    .get(userId);
+
+  const data = {
+    exported_at: new Date().toISOString(),
+    profile,
+    classes: [],
+    progress: [],
+    test_results: [],
+  };
+
+  if (req.user.role === 'student') {
+    data.classes = db
+      .prepare(
+        `SELECT c.id, c.title, c.subject, c.description, c.class_code, cm.joined_at
+         FROM class_members cm
+         INNER JOIN classes c ON c.id = cm.class_id
+         WHERE cm.student_id = ?`,
+      )
+      .all(userId);
+
+    data.progress = db
+      .prepare('SELECT * FROM word_progress WHERE student_id = ?')
+      .all(userId);
+
+    data.test_results = db
+      .prepare('SELECT * FROM test_results WHERE student_id = ?')
+      .all(userId);
+
+    data.my_sets = db
+      .prepare('SELECT * FROM student_word_sets WHERE student_id = ?')
+      .all(userId);
+
+    data.my_cards = db
+      .prepare(
+        `SELECT sc.* FROM student_word_cards sc
+         INNER JOIN student_word_sets ss ON ss.id = sc.student_set_id
+         WHERE ss.student_id = ?`,
+      )
+      .all(userId);
+
+    data.my_progress = db
+      .prepare('SELECT * FROM student_word_progress WHERE student_id = ?')
+      .all(userId);
+
+    data.my_test_results = db
+      .prepare('SELECT * FROM student_test_results WHERE student_id = ?')
+      .all(userId);
+  }
+
+  if (req.user.role === 'teacher') {
+    data.classes = db
+      .prepare('SELECT * FROM classes WHERE teacher_id = ?')
+      .all(userId);
+
+    data.word_sets = db
+      .prepare('SELECT * FROM word_sets WHERE teacher_id = ?')
+      .all(userId);
+
+    data.word_cards = db
+      .prepare(
+        `SELECT wc.* FROM word_cards wc
+         INNER JOIN word_sets ws ON ws.id = wc.word_set_id
+         WHERE ws.teacher_id = ?`,
+      )
+      .all(userId);
+
+    data.assignments = db
+      .prepare(
+        `SELECT a.* FROM assignments a
+         INNER JOIN classes c ON c.id = a.class_id
+         WHERE c.teacher_id = ?`,
+      )
+      .all(userId);
+  }
+
+  return res.json(data);
+});
+
 // повертає дані поточного користувача
 router.get('/me', requireAuth, (req, res) => {
   return res.json({
