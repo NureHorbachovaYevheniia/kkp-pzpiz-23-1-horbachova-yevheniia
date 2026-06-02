@@ -101,6 +101,47 @@ export function initDb() {
       last_reviewed_at TEXT,
       UNIQUE(student_id, word_card_id, assignment_id)
     );
+
+    -- власні набори учня
+    CREATE TABLE IF NOT EXISTS student_word_sets (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      student_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      title TEXT NOT NULL,
+      language TEXT NOT NULL DEFAULT '',
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS student_word_cards (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      student_set_id INTEGER NOT NULL REFERENCES student_word_sets(id) ON DELETE CASCADE,
+      word TEXT NOT NULL,
+      translation TEXT NOT NULL,
+      image_url TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS student_word_progress (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      student_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      student_card_id INTEGER NOT NULL REFERENCES student_word_cards(id) ON DELETE CASCADE,
+      status TEXT NOT NULL DEFAULT 'not_started'
+        CHECK(status IN ('not_started', 'know', 'almost', 'repeat')),
+      correct_count INTEGER NOT NULL DEFAULT 0,
+      wrong_count INTEGER NOT NULL DEFAULT 0,
+      last_reviewed_at TEXT,
+      UNIQUE(student_id, student_card_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS student_test_results (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      student_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      student_set_id INTEGER NOT NULL REFERENCES student_word_sets(id) ON DELETE CASCADE,
+      score REAL NOT NULL,
+      total_words INTEGER NOT NULL,
+      correct_answers INTEGER NOT NULL,
+      wrong_answers INTEGER NOT NULL,
+      completed_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
   `);
 
   // якщо база стара і колонки token ще немає — додаємо її
