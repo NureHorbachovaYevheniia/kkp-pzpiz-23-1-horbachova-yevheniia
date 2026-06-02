@@ -109,8 +109,11 @@ app.use('/api', adminRouter);
 app.use('/api', statsRouter);
 
 // IoT-симулятор (статичні файли)
+app.get('/iot/', (req, res) => {
+  res.sendFile(path.join(iotPath, 'index.html'));
+});
 app.get('/iot', (req, res) => res.redirect('/iot/'));
-app.use('/iot', express.static(iotPath));
+app.use('/iot', express.static(iotPath, { redirect: false }));
 
 // веб-клієнт після npm run build у client/
 if (fs.existsSync(path.join(clientDist, 'index.html'))) {

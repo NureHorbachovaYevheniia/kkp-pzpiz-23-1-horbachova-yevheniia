@@ -454,7 +454,7 @@ export async function renderStudy(root, navigate) {
     const last = appState.studyIndex + 1 >= total;
     body = `
       <p class="counter">${appState.studyIndex + 1} / ${total}</p>
-      ${card.image_url ? `<img class="card-image" src="${escapeHtml(card.image_url)}" alt="${escapeHtml(card.word)}" />` : ''}
+      ${card.image_url ? `<div class="card-image-wrap"><img class="card-image" src="${escapeHtml(card.image_url)}" alt="${escapeHtml(card.word)}" /></div>` : ''}
       <p class="card-tr">${escapeHtml(card.translation)}</p>
       <p class="feedback ${correct ? 'feedback--ok' : 'feedback--bad'}">
         ${escapeHtml(correct ? t('student.study.correct') : t('student.study.incorrect'))}
@@ -468,7 +468,7 @@ export async function renderStudy(root, navigate) {
   } else {
     body = `
       <p class="counter">${appState.studyIndex + 1} / ${total}</p>
-      ${card.image_url ? `<img class="card-image" src="${escapeHtml(card.image_url)}" alt="${escapeHtml(card.word)}" />` : ''}
+      ${card.image_url ? `<div class="card-image-wrap"><img class="card-image" src="${escapeHtml(card.image_url)}" alt="${escapeHtml(card.word)}" /></div>` : ''}
       <p class="card-tr">${escapeHtml(card.translation)}</p>
       ${speechSupported() ? `<p class="study-listen-row"><button type="button" id="speak-word" class="btn btn--ghost btn--sm">🔊 ${escapeHtml(t('student.study.listen'))}</button></p>` : ''}
       <p class="study-hint">${escapeHtml(t('student.study.prompt'))}</p>
@@ -581,7 +581,7 @@ export async function renderFlashcards(root, navigate) {
     body = `
       <p class="counter">${t('student.flash.progress', { learned: appState.flashLearned, total: totalCards })}</p>
       <div class="flashcard" id="flashcard">
-        ${card.image_url ? `<img class="card-image" src="${escapeHtml(card.image_url)}" alt="${escapeHtml(card.word)}" />` : ''}
+        ${card.image_url ? `<div class="card-image-wrap"><img class="card-image" src="${escapeHtml(card.image_url)}" alt="${escapeHtml(card.word)}" /></div>` : ''}
         <p class="card-term">${escapeHtml(card.word)}</p>
         ${card.example ? `<p class="card-example">${formatExampleHtml(card.example)}</p>` : ''}
         ${speechSupported() ? `<button type="button" id="speak-word" class="btn btn--ghost btn--sm">🔊 ${escapeHtml(t('student.study.listen'))}</button>` : ''}

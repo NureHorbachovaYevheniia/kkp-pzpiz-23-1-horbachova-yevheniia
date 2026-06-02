@@ -32,7 +32,7 @@ async function api(path, options = {}) {
   return data;
 }
 
-// показати, що пристрій онлайн
+// показати, що сервер доступний
 function setOnline(yes) {
   if (yes) {
     statusEl.textContent = t('online');
@@ -43,9 +43,22 @@ function setOnline(yes) {
   }
 }
 
+// перевірка, чи працює сервер
+async function checkServer() {
+  try {
+    const res = await fetch('/health');
+    const data = await res.json();
+    const ok = res.ok && data.ok;
+    setOnline(ok);
+    return ok;
+  } catch {
+    setOnline(false);
+    return false;
+  }
+}
+
 // форма входу
 function showLogin() {
-  setOnline(false);
   screen.innerHTML = `
     <p class="hint">${t('loginTitle')}</p>
     <label>Email</label>
@@ -88,10 +101,8 @@ async function doLogin() {
     }
 
     localStorage.setItem(TOKEN_KEY, data.token);
-    setOnline(true);
     showMainMenu(data.user);
   } catch (err) {
-    setOnline(false);
     screen.innerHTML = `<p class="error">${err.message}</p>`;
     buttons.innerHTML = `<button id="btn-retry">${t('retry')}</button>`;
     document.getElementById('btn-retry').onclick = showLogin;
@@ -258,6 +269,14 @@ function showCard() {
 
 // перевіряємо, чи вже залогінені
 async function start() {
+  const serverOk = await checkServer();
+  if (!serverOk) {
+    screen.innerHTML = `<p class="error">${t('serverUnreachable')}</p>`;
+    buttons.innerHTML = `<button id="btn-retry">${t('retry')}</button>`;
+    document.getElementById('btn-retry').onclick = start;
+    return;
+  }
+
   const token = localStorage.getItem(TOKEN_KEY);
   if (!token) {
     showLogin();
@@ -270,7 +289,6 @@ async function start() {
       doLogout();
       return;
     }
-    setOnline(true);
     showMainMenu(user);
   } catch {
     doLogout();
