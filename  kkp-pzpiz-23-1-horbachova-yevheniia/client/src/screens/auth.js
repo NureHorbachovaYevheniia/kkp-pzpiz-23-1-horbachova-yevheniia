@@ -51,7 +51,7 @@ export function renderLogin(root, navigate) {
       });
       setToken(data.token);
       appState.user = data.user;
-      navigate(data.user.role === 'teacher' ? 'teacher-dashboard' : 'student-dashboard');
+      navigate(dashboardScreen(data.user));
     } catch (e2) {
       err.textContent = e2.message || t('error.login');
     }
@@ -208,7 +208,7 @@ export function renderRegisterSurvey(root, navigate) {
       setToken(data.token);
       appState.user = data.user;
       appState.registerData = null;
-      navigate(data.user.role === 'teacher' ? 'teacher-dashboard' : 'student-dashboard');
+      navigate(dashboardScreen(data.user));
     } catch (e2) {
       err.textContent = e2.message || t('error.register');
     }
@@ -225,8 +225,10 @@ export function headerBar(user, onLogout, extra = '') {
   `);
 }
 
-function dashboardScreen(user) {
-  return user.role === 'teacher' ? 'teacher-dashboard' : 'student-dashboard';
+export function dashboardScreen(user) {
+  if (user.role === 'admin') return 'admin-dashboard';
+  if (user.role === 'teacher') return 'teacher-dashboard';
+  return 'student-dashboard';
 }
 
 export function renderProfile(root, navigate) {
