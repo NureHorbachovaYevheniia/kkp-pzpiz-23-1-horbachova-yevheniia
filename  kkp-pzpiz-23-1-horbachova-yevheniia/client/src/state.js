@@ -10,7 +10,6 @@ export const appState = {
   studyLanguage: '',
   studyIndex: 0,
   showTranslation: false,
-  reviewErrorsOnly: false,
   studyCorrect: 0,
   studyChecked: false,
   studyTyped: '',
@@ -33,7 +32,6 @@ export function resetStudyState() {
   appState.studyLanguage = '';
   appState.studyIndex = 0;
   appState.showTranslation = false;
-  appState.reviewErrorsOnly = false;
   appState.studyCorrect = 0;
   appState.studyChecked = false;
   appState.studyTyped = '';

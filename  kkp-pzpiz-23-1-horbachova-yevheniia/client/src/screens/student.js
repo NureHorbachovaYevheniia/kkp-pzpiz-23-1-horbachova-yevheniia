@@ -338,16 +338,9 @@ export async function renderAssignmentDetail(root, navigate) {
 }
 
 export async function renderStudy(root, navigate) {
-  let cards;
-  if (appState.reviewErrorsOnly) {
-    const data = await api(studyBase() + '/review-errors');
-    cards = data.cards || [];
-    appState.studyLanguage = data.language || (data.set && data.set.language) || '';
-  } else {
-    const data = await api(studyBase() + '/study');
-    cards = data.cards || [];
-    appState.studyLanguage = data.language || (data.set && data.set.language) || '';
-  }
+  const data = await api(studyBase() + '/study');
+  const cards = data.cards || [];
+  appState.studyLanguage = data.language || (data.set && data.set.language) || '';
 
   if (!appState.studyCards) {
     appState.studyCards = cards;
@@ -364,7 +357,7 @@ export async function renderStudy(root, navigate) {
   const idx = queue[appState.studyIndex];
   const card = appState.studyCards[idx];
   const done = !card || total === 0;
-  const heading = appState.reviewErrorsOnly ? t('student.study.reviewTitle') : t('student.study.title');
+  const heading = t('student.study.title');
 
   let body;
   if (done) {
