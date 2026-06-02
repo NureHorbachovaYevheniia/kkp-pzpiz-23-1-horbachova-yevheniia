@@ -536,13 +536,7 @@ export async function renderTeacherCreateAssignment(root, navigate) {
           <label>${escapeHtml(t('teacher.assign.name'))} <input name="title" required placeholder="${escapeHtml(t('teacher.assign.namePlaceholder'))}" /></label>
           <label>${escapeHtml(t('teacher.assign.start'))} <input name="start_date" type="date" value="${today}" required /></label>
           <label>${escapeHtml(t('teacher.assign.deadline'))} <input name="deadline" type="date" value="${deadline}" required /></label>
-          <label>${escapeHtml(t('teacher.assign.mode'))}
-            <select name="mode">
-              <option value="mixed">${escapeHtml(statusLabel('mixed'))}</option>
-              <option value="study">${escapeHtml(statusLabel('study'))}</option>
-              <option value="test">${escapeHtml(statusLabel('test'))}</option>
-            </select>
-          </label>
+          <p class="hint">Спочатку учням доступні тільки картки і навчання. Тест можна активувати потім у класі.</p>
           <button type="submit" class="btn btn--primary">${escapeHtml(t('teacher.assign.submit'))}</button>
         </form>
         <p id="assign-err" class="err"></p>
@@ -568,7 +562,7 @@ export async function renderTeacherCreateAssignment(root, navigate) {
           title: String(fd.get('title') || ''),
           start_date: String(fd.get('start_date') || ''),
           deadline: String(fd.get('deadline') || ''),
-          mode: String(fd.get('mode') || 'mixed'),
+          mode: 'study',
         }),
       });
       appState.classId = Number(fd.get('class_id'));
