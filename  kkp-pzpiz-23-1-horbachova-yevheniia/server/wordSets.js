@@ -149,6 +149,7 @@ router.post('/word-sets/:id/cards', requireAuth, requireTeacher, (req, res) => {
   const word = String(req.body.word || '').trim();
   const translation = String(req.body.translation || '').trim();
   const imageUrl = String(req.body.image_url || '').trim() || null;
+  const example = String(req.body.example || '').trim() || null;
 
   if (word.length < 1 || translation.length < 1) {
     return res.status(400).json({ error: 'Введіть слово і переклад' });
@@ -156,10 +157,10 @@ router.post('/word-sets/:id/cards', requireAuth, requireTeacher, (req, res) => {
 
   const info = getDb()
     .prepare(
-      `INSERT INTO word_cards (word_set_id, word, translation, image_url)
-       VALUES (?, ?, ?, ?)`,
+      `INSERT INTO word_cards (word_set_id, word, translation, image_url, example)
+       VALUES (?, ?, ?, ?, ?)`,
     )
-    .run(setId, word, translation, imageUrl);
+    .run(setId, word, translation, imageUrl, example);
 
   const row = getDb().prepare('SELECT * FROM word_cards WHERE id = ?').get(info.lastInsertRowid);
   return res.status(201).json(row);
@@ -184,14 +185,20 @@ router.patch('/word-cards/:id', requireAuth, requireTeacher, (req, res) => {
       : typeof req.body.image_url === 'string'
         ? req.body.image_url.trim() || null
         : card.image_url;
+  const example =
+    req.body.example === null
+      ? null
+      : typeof req.body.example === 'string'
+        ? req.body.example.trim() || null
+        : card.example;
 
   if (word.length < 1 || translation.length < 1) {
     return res.status(400).json({ error: 'Введіть слово і переклад' });
   }
 
   getDb()
-    .prepare('UPDATE word_cards SET word = ?, translation = ?, image_url = ? WHERE id = ?')
-    .run(word, translation, imageUrl, cardId);
+    .prepare('UPDATE word_cards SET word = ?, translation = ?, image_url = ?, example = ? WHERE id = ?')
+    .run(word, translation, imageUrl, example, cardId);
 
   const row = getDb().prepare('SELECT * FROM word_cards WHERE id = ?').get(cardId);
   return res.json(row);

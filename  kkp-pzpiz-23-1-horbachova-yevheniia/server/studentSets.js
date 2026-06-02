@@ -171,6 +171,7 @@ router.post('/my-sets/:id/cards', requireAuth, requireStudent, (req, res) => {
   const word = String(req.body.word || '').trim();
   const translation = String(req.body.translation || '').trim();
   const imageUrl = String(req.body.image_url || '').trim() || null;
+  const example = String(req.body.example || '').trim() || null;
 
   if (word.length < 1 || translation.length < 1) {
     return res.status(400).json({ error: 'Введіть слово і переклад' });
@@ -178,10 +179,10 @@ router.post('/my-sets/:id/cards', requireAuth, requireStudent, (req, res) => {
 
   const info = getDb()
     .prepare(
-      `INSERT INTO student_word_cards (student_set_id, word, translation, image_url)
-       VALUES (?, ?, ?, ?)`,
+      `INSERT INTO student_word_cards (student_set_id, word, translation, image_url, example)
+       VALUES (?, ?, ?, ?, ?)`,
     )
-    .run(setId, word, translation, imageUrl);
+    .run(setId, word, translation, imageUrl, example);
 
   const row = getDb()
     .prepare('SELECT * FROM student_word_cards WHERE id = ?')
@@ -208,14 +209,20 @@ router.patch('/my-cards/:id', requireAuth, requireStudent, (req, res) => {
       : typeof req.body.image_url === 'string'
         ? req.body.image_url.trim() || null
         : card.image_url;
+  const example =
+    req.body.example === null
+      ? null
+      : typeof req.body.example === 'string'
+        ? req.body.example.trim() || null
+        : card.example;
 
   if (word.length < 1 || translation.length < 1) {
     return res.status(400).json({ error: 'Введіть слово і переклад' });
   }
 
   getDb()
-    .prepare('UPDATE student_word_cards SET word = ?, translation = ?, image_url = ? WHERE id = ?')
-    .run(word, translation, imageUrl, cardId);
+    .prepare('UPDATE student_word_cards SET word = ?, translation = ?, image_url = ?, example = ? WHERE id = ?')
+    .run(word, translation, imageUrl, example, cardId);
 
   const row = getDb().prepare('SELECT * FROM student_word_cards WHERE id = ?').get(cardId);
   return res.json(row);
