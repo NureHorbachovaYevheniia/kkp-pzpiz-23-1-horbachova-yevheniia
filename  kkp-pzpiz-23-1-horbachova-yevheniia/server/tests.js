@@ -7,6 +7,30 @@ import { getAssignmentById, canAccessAssignment, shuffleArray } from './helpers.
 
 const router = Router();
 
+// прості правила доступу до тесту
+function testError(assignment, studentId) {
+  if (assignment.mode !== 'test') {
+    return 'Тест ще не активований викладачем';
+  }
+  if (assignment.status !== 'active') {
+    return 'Тест зараз недоступний';
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
+  if (assignment.deadline < today) {
+    return 'Час проходження тесту завершено';
+  }
+
+  const passed = getDb()
+    .prepare('SELECT id FROM test_results WHERE assignment_id = ? AND student_id = ? LIMIT 1')
+    .get(assignment.id, studentId);
+  if (passed) {
+    return 'Тест можна пройти лише один раз';
+  }
+
+  return '';
+}
+
 // будуємо одне питання: правильний переклад + 3 неправильні варіанти
 function buildQuestion(card, allCards) {
   const distractors = shuffleArray(
@@ -39,6 +63,11 @@ router.get('/assignments/:id/test', requireAuth, requireStudent, (req, res) => {
   }
 
   const db = getDb();
+  const err = testError(assignment, req.user.id);
+  if (err) {
+    return res.status(403).json({ error: err });
+  }
+
   const cards = db
     .prepare('SELECT * FROM word_cards WHERE word_set_id = ? ORDER BY id')
     .all(assignment.word_set_id);
@@ -66,6 +95,11 @@ router.post('/assignments/:id/test/submit', requireAuth, requireStudent, (req, r
   const assignment = getAssignmentById(assignmentId);
   if (!canAccessAssignment(req.user, assignment)) {
     return res.status(404).json({ error: 'Завдання не знайдено' });
+  }
+
+  const err = testError(assignment, req.user.id);
+  if (err) {
+    return res.status(403).json({ error: err });
   }
 
   const answers = Array.isArray(req.body.answers) ? req.body.answers : [];

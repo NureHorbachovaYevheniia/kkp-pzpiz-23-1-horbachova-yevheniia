@@ -69,6 +69,128 @@ function insertStudentFlashSet(database, studentId) {
   }
 }
 
+// мок-дані для статистики: результати тестів і прогрес слів
+function insertStatsDemo(database, student1Id, student2Id, classId, setId) {
+  const cards = database
+    .prepare('SELECT id FROM word_cards WHERE word_set_id = ? ORDER BY id')
+    .all(setId);
+  if (cards.length === 0) return;
+
+  const start = new Date();
+  const deadline = new Date(start);
+  deadline.setDate(deadline.getDate() + 14);
+
+  // друге завдання для графіка (2 стовпчики замість одного)
+  let assignment2 = database
+    .prepare('SELECT id FROM assignments WHERE class_id = ? AND title = ?')
+    .get(classId, 'Тиждень 2: повторення');
+
+  if (!assignment2) {
+    const row = database
+      .prepare(
+        `INSERT INTO assignments (class_id, word_set_id, title, start_date, deadline, mode, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .run(
+        classId,
+        setId,
+        'Тиждень 2: повторення',
+        start.toISOString().slice(0, 10),
+        deadline.toISOString().slice(0, 10),
+        'test',
+        'active',
+      );
+    assignment2 = { id: row.lastInsertRowid };
+  }
+
+  const assignment1 = database
+    .prepare('SELECT id FROM assignments WHERE class_id = ? ORDER BY id LIMIT 1')
+    .get(classId);
+  if (!assignment1) return;
+
+  const insTest = database.prepare(
+    `INSERT INTO test_results (assignment_id, student_id, score, total_words, correct_answers, wrong_answers)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+  );
+
+  const insProgress = database.prepare(
+    `INSERT OR IGNORE INTO word_progress (student_id, word_card_id, assignment_id, status, correct_count, wrong_count, last_reviewed_at)
+     VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`,
+  );
+
+  function addTest(assignmentId, studentId, score, total, correct, wrong) {
+    const exists = database
+      .prepare('SELECT id FROM test_results WHERE assignment_id = ? AND student_id = ?')
+      .get(assignmentId, studentId);
+    if (!exists) {
+      insTest.run(assignmentId, studentId, score, total, correct, wrong);
+    }
+  }
+
+  // результати тестів
+  addTest(assignment1.id, student1Id, 88, 8, 7, 1);
+  addTest(assignment1.id, student2Id, 75, 8, 6, 2);
+  addTest(assignment2.id, student1Id, 92, 8, 7, 1);
+  addTest(assignment2.id, student2Id, 65, 8, 5, 3);
+
+  // прогрес слів для student1 (більше «знаю»)
+  const s1Progress = [
+    ['know', 3, 0],
+    ['know', 2, 0],
+    ['almost', 1, 1],
+    ['know', 4, 0],
+    ['repeat', 0, 2],
+    ['know', 2, 0],
+    ['almost', 1, 0],
+  ];
+  for (let i = 0; i < s1Progress.length && i < cards.length; i++) {
+    insProgress.run(student1Id, cards[i].id, assignment1.id, ...s1Progress[i]);
+  }
+
+  // прогрес слів для student2 (менше «знаю»)
+  const s2Fixed = [
+    ['know', 2, 0],
+    ['almost', 1, 1],
+    ['repeat', 0, 3],
+    ['know', 1, 0],
+    ['repeat', 1, 1],
+  ];
+  for (let i = 0; i < s2Fixed.length && i < cards.length; i++) {
+    insProgress.run(student2Id, cards[i].id, assignment1.id, ...s2Fixed[i]);
+  }
+}
+
+// якщо в демо-класі ще немає результатів — додаємо мок-статистику
+export function seedStatsDemoIfMissing(database) {
+  const cls = database.prepare("SELECT id FROM classes WHERE class_code = 'DEMO01'").get();
+  if (!cls) return;
+
+  const hasStats = database
+    .prepare(
+      `SELECT id FROM assignments WHERE class_id = ? AND title = ?`,
+    )
+    .get(cls.id, 'Тиждень 2: повторення');
+  if (hasStats) return;
+
+  const student1 = database
+    .prepare("SELECT id FROM users WHERE email = 'student1@learnly.local'")
+    .get();
+  const student2 = database
+    .prepare("SELECT id FROM users WHERE email = 'student2@learnly.local'")
+    .get();
+  const set = database
+    .prepare(
+      `SELECT ws.id FROM word_sets ws
+       INNER JOIN classes c ON c.teacher_id = ws.teacher_id
+       WHERE c.id = ? ORDER BY ws.id LIMIT 1`,
+    )
+    .get(cls.id);
+
+  if (!student1 || !student2 || !set) return;
+
+  insertStatsDemo(database, student1.id, student2.id, cls.id, set.id);
+}
+
 // якщо база вже є — додаємо демо-набір учню, якщо його ще немає
 export function seedStudentFlashDemoIfMissing(database) {
   const student = database
@@ -188,6 +310,8 @@ export function seedDemoIfEmpty(database) {
         'mixed',
         'active',
       );
+
+    insertStatsDemo(database, s1.lastInsertRowid, s2.lastInsertRowid, classId, setId);
   });
 
   tx();
