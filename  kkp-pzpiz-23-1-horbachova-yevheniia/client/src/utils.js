@@ -48,3 +48,35 @@ export function statusLabel(status) {
   const label = t(key);
   return label === key ? status : label;
 }
+
+// назва мови набору → код голосу для синтезу мовлення
+const SPEECH_LANGS = {
+  English: 'en-US',
+  Deutsch: 'de-DE',
+  Français: 'fr-FR',
+  Español: 'es-ES',
+  Italiano: 'it-IT',
+  Polski: 'pl-PL',
+  Українська: 'uk-UA',
+};
+
+export function speechSupported() {
+  return typeof window !== 'undefined' && 'speechSynthesis' in window;
+}
+
+// озвучуємо слово голосом браузера; повертаємо false, якщо не вдалося
+export function speakWord(text, language) {
+  const word = String(text ?? '').trim();
+  if (!word || !speechSupported()) return false;
+  try {
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(word);
+    const lang = SPEECH_LANGS[language];
+    if (lang) utter.lang = lang;
+    utter.rate = 0.9;
+    window.speechSynthesis.speak(utter);
+    return true;
+  } catch {
+    return false;
+  }
+}

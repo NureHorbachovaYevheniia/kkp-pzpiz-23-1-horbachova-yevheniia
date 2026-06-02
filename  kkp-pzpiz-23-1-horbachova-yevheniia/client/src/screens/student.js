@@ -1,5 +1,14 @@
 import { api } from '../api.js';
-import { el, escapeHtml, formatDate, statusLabel, shuffleArray, normalizeAnswer } from '../utils.js';
+import {
+  el,
+  escapeHtml,
+  formatDate,
+  statusLabel,
+  shuffleArray,
+  normalizeAnswer,
+  speakWord,
+  speechSupported,
+} from '../utils.js';
 import { appState, resetStudyState, resetTestState } from '../state.js';
 import { headerBar, bindLogout } from './auth.js';
 import { t } from '../i18n.js';
@@ -343,9 +352,11 @@ export async function renderStudy(root, navigate) {
   if (appState.reviewErrorsOnly) {
     const data = await api(studyBase() + '/review-errors');
     cards = data.cards || [];
+    appState.studyLanguage = data.language || (data.set && data.set.language) || '';
   } else {
     const data = await api(studyBase() + '/study');
     cards = data.cards || [];
+    appState.studyLanguage = data.language || (data.set && data.set.language) || '';
   }
 
   if (!appState.studyCards) {
@@ -389,6 +400,7 @@ export async function renderStudy(root, navigate) {
       </p>
       <p class="feedback-detail">${escapeHtml(t('student.study.yourAnswerLabel'))}: <strong>${escapeHtml(appState.studyTyped || '—')}</strong></p>
       ${correct ? '' : `<p class="feedback-detail">${escapeHtml(t('student.study.correctAnswerLabel'))}: <strong>${escapeHtml(card.word)}</strong></p>`}
+      ${speechSupported() ? `<p class="study-listen-row"><button type="button" id="speak-word" class="btn btn--ghost btn--sm">🔊 ${escapeHtml(t('student.study.listen'))}</button></p>` : ''}
       <div class="card-actions card-actions--stack">
         <button type="button" id="next" class="btn btn--primary">${escapeHtml(last ? t('btn.finish') : t('btn.next'))}</button>
       </div>`;
@@ -397,6 +409,7 @@ export async function renderStudy(root, navigate) {
       <p class="counter">${appState.studyIndex + 1} / ${total}</p>
       ${card.image_url ? `<img class="card-image" src="${escapeHtml(card.image_url)}" alt="${escapeHtml(card.word)}" />` : ''}
       <p class="card-tr">${escapeHtml(card.translation)}</p>
+      ${speechSupported() ? `<p class="study-listen-row"><button type="button" id="speak-word" class="btn btn--ghost btn--sm">🔊 ${escapeHtml(t('student.study.listen'))}</button></p>` : ''}
       <p class="study-hint">${escapeHtml(t('student.study.prompt'))}</p>
       <form id="answer-form" class="study-answer">
         <input id="answer-input" type="text" class="study-input" autocomplete="off" autocapitalize="off"
@@ -444,6 +457,10 @@ export async function renderStudy(root, navigate) {
       /* прогрес не критичний для проходження */
     }
     renderStudy(root, navigate);
+  });
+
+  root.querySelector('#speak-word')?.addEventListener('click', () => {
+    if (card) speakWord(card.word, appState.studyLanguage);
   });
 
   root.querySelector('#next')?.addEventListener('click', () => {

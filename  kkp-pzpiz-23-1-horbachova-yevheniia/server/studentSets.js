@@ -335,7 +335,7 @@ router.get('/my-sets/:id/review-errors', requireAuth, requireStudent, (req, res)
     )
     .all(req.user.id, setId);
 
-  return res.json({ set_id: setId, cards });
+  return res.json({ set_id: setId, language: set.language, cards });
 });
 
 // створюємо тест зі списком питань

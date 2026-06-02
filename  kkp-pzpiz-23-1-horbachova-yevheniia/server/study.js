@@ -43,6 +43,7 @@ router.get('/assignments/:id/study', requireAuth, requireStudent, (req, res) => 
       deadline: assignment.deadline,
       word_set_title: assignment.word_set_title,
     },
+    language: assignment.word_set_language,
     cards,
   });
 });
@@ -124,7 +125,7 @@ router.get('/assignments/:id/review-errors', requireAuth, requireStudent, (req, 
     )
     .all(assignmentId, req.user.id, assignment.word_set_id);
 
-  return res.json({ assignment_id: assignmentId, cards });
+  return res.json({ assignment_id: assignmentId, language: assignment.word_set_language, cards });
 });
 
 export default router;

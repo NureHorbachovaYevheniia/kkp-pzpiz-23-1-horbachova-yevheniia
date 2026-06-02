@@ -7,6 +7,7 @@ export const appState = {
   studySource: 'assignment',
   studyQueue: null,
   studyCards: null,
+  studyLanguage: '',
   studyIndex: 0,
   showTranslation: false,
   reviewErrorsOnly: false,
@@ -24,6 +25,7 @@ export const appState = {
 export function resetStudyState() {
   appState.studyQueue = null;
   appState.studyCards = null;
+  appState.studyLanguage = '';
   appState.studyIndex = 0;
   appState.showTranslation = false;
   appState.reviewErrorsOnly = false;

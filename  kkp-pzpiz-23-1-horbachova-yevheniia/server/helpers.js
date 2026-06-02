@@ -38,7 +38,8 @@ export function isStudentInClass(classId, studentId) {
 export function getAssignmentById(assignmentId) {
   return getDb()
     .prepare(
-      `SELECT a.*, c.teacher_id, c.title AS class_title, ws.title AS word_set_title
+      `SELECT a.*, c.teacher_id, c.title AS class_title,
+       ws.title AS word_set_title, ws.language AS word_set_language
        FROM assignments a
        INNER JOIN classes c ON c.id = a.class_id
        INNER JOIN word_sets ws ON ws.id = a.word_set_id
