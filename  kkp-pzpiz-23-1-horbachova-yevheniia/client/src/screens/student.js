@@ -4,6 +4,28 @@ import { appState, resetStudyState, resetTestState } from '../state.js';
 import { headerBar, bindLogout } from './auth.js';
 import { t } from '../i18n.js';
 
+const LANGUAGES = [
+  'English',
+  'Deutsch',
+  'Français',
+  'Español',
+  'Italiano',
+  'Polski',
+  'Українська',
+];
+
+// базовий шлях для навчання/тесту: завдання вчителя або власний набір учня
+function studyBase() {
+  return appState.studySource === 'myset'
+    ? '/api/my-sets/' + appState.wordSetId
+    : '/api/assignments/' + appState.assignmentId;
+}
+
+// куди повертатись з навчання/тесту
+function studyBackScreen() {
+  return appState.studySource === 'myset' ? 'student-set' : 'assignment-detail';
+}
+
 export async function renderStudentDashboard(root, navigate) {
   const assignments = await api('/api/student/assignments');
 
@@ -20,7 +42,7 @@ export async function renderStudentDashboard(root, navigate) {
   root.replaceChildren(
     el(`
       <main class="box box--wide box--deck">
-        ${headerBar(appState.user, null, `<button type="button" id="join" class="btn btn--secondary btn--sm">${escapeHtml(t('student.joinBtn'))}</button>`).outerHTML}
+        ${headerBar(appState.user, null, `<button type="button" id="my-sets" class="btn btn--primary btn--sm">${escapeHtml(t('student.mySets'))}</button><button type="button" id="join" class="btn btn--secondary btn--sm">${escapeHtml(t('student.joinBtn'))}</button>`).outerHTML}
         <section class="deck-section">
           <h2 class="deck-heading">${escapeHtml(t('student.activeAssignments'))}</h2>
           ${assignList ? `<ul class="sets">${assignList}</ul>` : `<p class="empty-msg">${escapeHtml(t('student.noAssignments'))}</p>`}
@@ -29,6 +51,7 @@ export async function renderStudentDashboard(root, navigate) {
     `),
   );
   bindLogout(root, navigate);
+  root.querySelector('#my-sets').addEventListener('click', () => navigate('student-sets'));
   root.querySelector('#join').addEventListener('click', () => navigate('student-join'));
   root.querySelectorAll('.open-assign').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -71,6 +94,204 @@ export function renderStudentJoin(root, navigate) {
   });
 }
 
+export async function renderStudentSets(root, navigate) {
+  const sets = await api('/api/my-sets');
+  const list = (sets || [])
+    .map(
+      (s) => `<li class="set-row">
+        <span class="set-title">${escapeHtml(s.title)}</span>
+        <span class="meta">${escapeHtml(
+          t('teacher.setMeta', {
+            language: s.language || '—',
+            count: s.card_count || 0,
+          }),
+        )}</span>
+        <button type="button" class="btn btn--primary btn--sm open-set" data-id="${s.id}">${escapeHtml(t('btn.open'))}</button>
+      </li>`,
+    )
+    .join('');
+
+  root.replaceChildren(
+    el(`
+      <main class="box box--wide box--deck">
+        ${headerBar(appState.user, null, `<button type="button" id="back" class="btn btn--ghost btn--sm">${escapeHtml(t('btn.backCabinet'))}</button><button type="button" id="toggle-add-set" class="btn btn--primary btn--sm">${escapeHtml(t('student.addSet'))}</button>`).outerHTML}
+        <section class="deck-section">
+          <h2 class="deck-heading">${escapeHtml(t('student.mySetsTitle'))}</h2>
+          <section class="add-word-box" id="add-set-box" hidden>
+            <p class="add-word-title">${escapeHtml(t('student.newSet'))}</p>
+            <form id="new-set-form" class="form">
+              <input name="title" placeholder="${escapeHtml(t('teacher.placeholder.setTitle'))}" required maxlength="200" />
+              <select name="language" required>
+                <option value="" disabled selected>${escapeHtml(t('teacher.placeholder.selectLanguage'))}</option>
+                ${LANGUAGES.map((lng) => `<option value="${escapeHtml(lng)}">${escapeHtml(lng)}</option>`).join('')}
+              </select>
+              <button type="submit" class="btn btn--secondary btn--sm">${escapeHtml(t('btn.create'))}</button>
+            </form>
+            <p id="set-err" class="err"></p>
+          </section>
+          ${list ? `<ul class="sets">${list}</ul>` : `<p class="empty-msg">${escapeHtml(t('student.noSets'))}</p>`}
+        </section>
+      </main>
+    `),
+  );
+  bindLogout(root, navigate);
+  root.querySelector('#back').addEventListener('click', () => navigate('student-dashboard'));
+  root.querySelector('#toggle-add-set').addEventListener('click', () => {
+    const box = root.querySelector('#add-set-box');
+    box.hidden = !box.hidden;
+    if (!box.hidden) box.querySelector('[name=title]').focus();
+  });
+  root.querySelector('#new-set-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const errEl = root.querySelector('#set-err');
+    errEl.textContent = '';
+    const fd = new FormData(e.target);
+    const title = String(fd.get('title') || '').trim();
+    const language = String(fd.get('language') || '').trim();
+    if (title.length < 1 || title.length > 200) {
+      errEl.textContent = t('teacher.err.setTitle');
+      return;
+    }
+    if (!language) {
+      errEl.textContent = t('teacher.err.setLanguage');
+      return;
+    }
+    try {
+      const row = await api('/api/my-sets', {
+        method: 'POST',
+        body: JSON.stringify({ title, language }),
+      });
+      appState.wordSetId = row.id;
+      navigate('student-set');
+    } catch (e2) {
+      errEl.textContent = e2.message;
+    }
+  });
+  root.querySelectorAll('.open-set').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      appState.wordSetId = Number(btn.getAttribute('data-id'));
+      navigate('student-set');
+    });
+  });
+}
+
+export async function renderStudentSet(root, navigate) {
+  const [set, cards] = await Promise.all([
+    api('/api/my-sets/' + appState.wordSetId),
+    api('/api/my-sets/' + appState.wordSetId + '/cards'),
+  ]);
+
+  const cardList = (cards || [])
+    .map(
+      (c) => `<li class="set-row">
+        ${
+          c.image_url
+            ? `<img class="card-thumb" src="${escapeHtml(c.image_url)}" alt="${escapeHtml(c.word)}" />`
+            : '<span class="card-thumb card-thumb--empty">🖼</span>'
+        }
+        <span class="set-title">${escapeHtml(c.word)}</span>
+        <span class="meta">${escapeHtml(c.translation)}</span>
+        <button type="button" class="btn btn--ghost btn--sm del-card" data-id="${c.id}">×</button>
+      </li>`,
+    )
+    .join('');
+
+  const hasCards = (cards || []).length > 0;
+
+  root.replaceChildren(
+    el(`
+      <main class="box box--wide box--deck">
+        ${headerBar(appState.user, null, `<button type="button" id="back" class="btn btn--ghost btn--sm">${escapeHtml(t('btn.backSets'))}</button><button type="button" id="toggle-add" class="btn btn--primary btn--sm">${escapeHtml(t('teacher.addWord'))}</button>`).outerHTML}
+        <div class="deck-section-head">
+          <h2 class="deck-heading">${escapeHtml(set.title)}</h2>
+          <button type="button" id="delete-set" class="btn btn--ghost btn--sm">${escapeHtml(t('student.setDelete'))}</button>
+        </div>
+        <p class="deck-hint">${escapeHtml(set.language || '—')}</p>
+        ${
+          hasCards
+            ? `<div class="card-actions card-actions--stack">
+                <button type="button" id="go-study" class="btn btn--primary">${escapeHtml(t('student.assignment.study'))}</button>
+                <button type="button" id="go-review" class="btn btn--secondary">${escapeHtml(t('student.assignment.review'))}</button>
+                <button type="button" id="go-test" class="btn btn--secondary">${escapeHtml(t('student.assignment.test'))}</button>
+              </div>`
+            : ''
+        }
+        <section class="add-word-box" id="add-word-box" hidden>
+          <p class="add-word-title">${escapeHtml(t('teacher.addCard'))}</p>
+          <form id="add-card-form" class="form-row">
+            <input name="word" placeholder="${escapeHtml(t('teacher.placeholder.word'))}" required />
+            <input name="translation" placeholder="${escapeHtml(t('teacher.placeholder.translation'))}" required />
+            <input name="image_url" type="url" placeholder="${escapeHtml(t('teacher.placeholder.imageUrl'))}" />
+            <button type="submit" class="btn btn--secondary btn--sm">${escapeHtml(t('teacher.btn.add'))}</button>
+          </form>
+          <p id="card-err" class="err"></p>
+        </section>
+        ${cardList ? `<ul class="sets">${cardList}</ul>` : `<p class="empty-msg">${escapeHtml(t('teacher.noCards'))}</p>`}
+      </main>
+    `),
+  );
+  bindLogout(root, navigate);
+  root.querySelector('#back').addEventListener('click', () => navigate('student-sets'));
+  root.querySelector('#toggle-add').addEventListener('click', () => {
+    const box = root.querySelector('#add-word-box');
+    box.hidden = !box.hidden;
+    if (!box.hidden) box.querySelector('[name=word]').focus();
+  });
+  root.querySelector('#delete-set').addEventListener('click', async () => {
+    if (!window.confirm(t('student.setDeleteConfirm'))) return;
+    try {
+      await api('/api/my-sets/' + appState.wordSetId, { method: 'DELETE' });
+      navigate('student-sets');
+    } catch (e2) {
+      window.alert(e2.message);
+    }
+  });
+  root.querySelector('#add-card-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const errEl = root.querySelector('#card-err');
+    errEl.textContent = '';
+    const fd = new FormData(e.target);
+    try {
+      await api('/api/my-sets/' + appState.wordSetId + '/cards', {
+        method: 'POST',
+        body: JSON.stringify({
+          word: String(fd.get('word') || ''),
+          translation: String(fd.get('translation') || ''),
+          image_url: String(fd.get('image_url') || ''),
+        }),
+      });
+      e.target.reset();
+      await renderStudentSet(root, navigate);
+    } catch (e2) {
+      errEl.textContent = e2.message;
+    }
+  });
+  root.querySelectorAll('.del-card').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      if (!window.confirm(t('teacher.deleteCardConfirm'))) return;
+      await api('/api/my-cards/' + btn.getAttribute('data-id'), { method: 'DELETE' });
+      await renderStudentSet(root, navigate);
+    });
+  });
+  root.querySelector('#go-study')?.addEventListener('click', () => {
+    resetStudyState();
+    appState.studySource = 'myset';
+    appState.reviewErrorsOnly = false;
+    navigate('study');
+  });
+  root.querySelector('#go-review')?.addEventListener('click', () => {
+    resetStudyState();
+    appState.studySource = 'myset';
+    appState.reviewErrorsOnly = true;
+    navigate('study');
+  });
+  root.querySelector('#go-test')?.addEventListener('click', () => {
+    resetTestState();
+    appState.studySource = 'myset';
+    navigate('test');
+  });
+}
+
 export async function renderAssignmentDetail(root, navigate) {
   const a = await api('/api/assignments/' + appState.assignmentId);
   const canStudy = a.mode === 'study' || a.mode === 'mixed';
@@ -100,16 +321,19 @@ export async function renderAssignmentDetail(root, navigate) {
   root.querySelector('#back').addEventListener('click', () => navigate('student-dashboard'));
   root.querySelector('#go-study')?.addEventListener('click', () => {
     resetStudyState();
+    appState.studySource = 'assignment';
     appState.reviewErrorsOnly = false;
     navigate('study');
   });
   root.querySelector('#go-review')?.addEventListener('click', () => {
     resetStudyState();
+    appState.studySource = 'assignment';
     appState.reviewErrorsOnly = true;
     navigate('study');
   });
   root.querySelector('#go-test')?.addEventListener('click', () => {
     resetTestState();
+    appState.studySource = 'assignment';
     navigate('test');
   });
 }
@@ -117,10 +341,10 @@ export async function renderAssignmentDetail(root, navigate) {
 export async function renderStudy(root, navigate) {
   let cards;
   if (appState.reviewErrorsOnly) {
-    const data = await api('/api/assignments/' + appState.assignmentId + '/review-errors');
+    const data = await api(studyBase() + '/review-errors');
     cards = data.cards || [];
   } else {
-    const data = await api('/api/assignments/' + appState.assignmentId + '/study');
+    const data = await api(studyBase() + '/study');
     cards = data.cards || [];
   }
 
@@ -193,11 +417,11 @@ export async function renderStudy(root, navigate) {
   bindLogout(root, navigate);
   root.querySelector('#back')?.addEventListener('click', () => {
     resetStudyState();
-    navigate('assignment-detail');
+    navigate(studyBackScreen());
   });
   root.querySelector('#back-assign')?.addEventListener('click', () => {
     resetStudyState();
-    navigate('assignment-detail');
+    navigate(studyBackScreen());
   });
 
   const input = root.querySelector('#answer-input');
@@ -212,7 +436,7 @@ export async function renderStudy(root, navigate) {
     appState.studyChecked = true;
     if (isCorrect) appState.studyCorrect += 1;
     try {
-      await api('/api/assignments/' + appState.assignmentId + '/progress', {
+      await api(studyBase() + '/progress', {
         method: 'POST',
         body: JSON.stringify({ word_card_id: card.id, status: isCorrect ? 'know' : 'repeat' }),
       });
@@ -233,7 +457,7 @@ export async function renderStudy(root, navigate) {
 
 export async function renderTest(root, navigate) {
   if (!appState.testQuestions) {
-    const data = await api('/api/assignments/' + appState.assignmentId + '/test');
+    const data = await api(studyBase() + '/test');
     appState.testQuestions = data.questions || [];
     appState.testAnswers = [];
     appState.testIndex = 0;
@@ -246,7 +470,7 @@ export async function renderTest(root, navigate) {
   if (!q) {
     const answers = appState.testAnswers;
     try {
-      const result = await api('/api/assignments/' + appState.assignmentId + '/test/submit', {
+      const result = await api(studyBase() + '/test/submit', {
         method: 'POST',
         body: JSON.stringify({ answers }),
       });
@@ -280,7 +504,7 @@ export async function renderTest(root, navigate) {
   bindLogout(root, navigate);
   root.querySelector('#back')?.addEventListener('click', () => {
     resetTestState();
-    navigate('assignment-detail');
+    navigate(studyBackScreen());
   });
   root.querySelectorAll('.test-opt').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -328,10 +552,11 @@ export function renderTestResults(root, navigate) {
       </main>
     `),
   );
+  const backScreen = appState.studySource === 'myset' ? 'student-set' : 'student-dashboard';
   bindLogout(root, navigate);
-  root.querySelector('#back').addEventListener('click', () => navigate('student-dashboard'));
+  root.querySelector('#back').addEventListener('click', () => navigate(backScreen));
   root.querySelector('#done').addEventListener('click', () => {
     appState.testResults = null;
-    navigate('student-dashboard');
+    navigate(backScreen);
   });
 }
