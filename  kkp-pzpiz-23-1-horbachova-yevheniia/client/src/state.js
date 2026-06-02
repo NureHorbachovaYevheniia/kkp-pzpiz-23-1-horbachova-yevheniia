@@ -4,6 +4,7 @@ export const appState = {
   classId: null,
   wordSetId: null,
   assignmentId: null,
+  studySource: 'assignment',
   studyQueue: null,
   studyCards: null,
   studyIndex: 0,
