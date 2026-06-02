@@ -1,4 +1,4 @@
-mport { Router } from 'express';
+import { Router } from 'express';
 import { getDb } from './db.js';
 import { requireAuth } from './auth.js';
 import { requireStudent } from './middleware.js';
@@ -26,7 +26,7 @@ function getOwnedCard(cardId, studentId) {
     .get(cardId, studentId);
 }
 
-//правильний переклад + 3 неправильні
+// будуємо одне питання тесту: правильний переклад + 3 неправильні
 function buildQuestion(card, allCards) {
   const distractors = shuffleArray(
     allCards.filter((c) => c.id !== card.id).map((c) => c.translation),
