@@ -249,6 +249,11 @@ export function renderProfile(root, navigate) {
           <button type="submit" class="btn btn--primary btn--block">${escapeHtml(t('btn.save'))}</button>
         </form>
         <p id="profile-err" class="err" role="alert"></p>
+        <section class="profile-export">
+          <p class="hint">${escapeHtml(t('profile.exportHint'))}</p>
+          <button type="button" id="export-data" class="btn btn--secondary btn--block">${escapeHtml(t('profile.exportBtn'))}</button>
+          <p id="export-err" class="err" role="alert"></p>
+        </section>
         <section class="danger-zone">
           <p class="danger-zone__hint">${escapeHtml(t('profile.deleteHint'))}</p>
           <button type="button" id="delete-account" class="btn btn--danger btn--block">${escapeHtml(t('profile.deleteBtn'))}</button>
@@ -278,6 +283,24 @@ export function renderProfile(root, navigate) {
       navigate(back);
     } catch (e2) {
       err.textContent = e2.message || t('error.profile');
+    }
+  });
+
+  const exportErr = root.querySelector('#export-err');
+  root.querySelector('#export-data').addEventListener('click', async () => {
+    exportErr.textContent = '';
+    try {
+      const data = await api('/api/auth/me/export');
+      const json = JSON.stringify(data, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'learnly-data-' + user.id + '.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e2) {
+      exportErr.textContent = e2.message || t('error.export');
     }
   });
 
