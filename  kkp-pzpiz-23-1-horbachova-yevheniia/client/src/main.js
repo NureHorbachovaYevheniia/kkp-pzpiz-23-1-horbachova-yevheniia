@@ -22,6 +22,8 @@ import {
 import {
   renderStudentDashboard,
   renderStudentJoin,
+  renderStudentSets,
+  renderStudentSet,
   renderAssignmentDetail,
   renderStudy,
   renderTest,
@@ -80,6 +82,12 @@ async function render() {
         break;
       case 'student-join':
         renderStudentJoin(root, navigate);
+        break;
+      case 'student-sets':
+        await renderStudentSets(root, navigate);
+        break;
+      case 'student-set':
+        await renderStudentSet(root, navigate);
         break;
       case 'assignment-detail':
         await renderAssignmentDetail(root, navigate);
