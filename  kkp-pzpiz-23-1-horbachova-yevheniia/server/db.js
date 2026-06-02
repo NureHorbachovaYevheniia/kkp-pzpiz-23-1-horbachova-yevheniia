@@ -75,7 +75,7 @@ export function initDb() {
       title TEXT NOT NULL,
       start_date TEXT NOT NULL,
       deadline TEXT NOT NULL,
-      mode TEXT NOT NULL CHECK(mode IN ('study', 'test', 'mixed')),
+      mode TEXT NOT NULL CHECK(mode IN ('study', 'test')),
       status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('draft', 'active', 'closed')),
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
@@ -173,7 +173,7 @@ export function initDb() {
   } catch {
   }
 
-  // формат часу в профілі: 24-годинний або 12-годинний (AM/PM)
+  // формат часу в профілі
   try {
     db.exec("ALTER TABLE users ADD COLUMN time_format TEXT NOT NULL DEFAULT '24'");
   } catch {
@@ -206,6 +206,9 @@ export function initDb() {
       // колонка вже є — пропускаємо
     }
   }
+
+  // старі завдання з mode=mixed більше не використовуємо
+  db.prepare("UPDATE assignments SET mode = 'study' WHERE mode = 'mixed'").run();
 
   // якщо в users ще немає ролі admin — оновлюємо таблицю 
   migrateUsersRoleIfNeeded(db);
