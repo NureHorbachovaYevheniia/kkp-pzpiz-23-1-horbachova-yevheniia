@@ -63,6 +63,7 @@ export function initDb() {
       word TEXT NOT NULL,
       translation TEXT NOT NULL,
       image_url TEXT,
+      example TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
@@ -117,6 +118,7 @@ export function initDb() {
       word TEXT NOT NULL,
       translation TEXT NOT NULL,
       image_url TEXT,
+      example TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
@@ -170,13 +172,25 @@ export function initDb() {
     'ALTER TABLE word_sets DROP COLUMN description',
     'ALTER TABLE word_cards DROP COLUMN transcription',
     'ALTER TABLE word_cards DROP COLUMN difficulty',
-    'ALTER TABLE word_cards DROP COLUMN example',
   ];
   for (const sql of oldColumns) {
     try {
       db.exec(sql);
     } catch {
       // такої колонки вже немає — пропускаємо
+    }
+  }
+
+  // якщо база стара і колонки example ще немає — додаємо її
+  const exampleColumns = [
+    'ALTER TABLE word_cards ADD COLUMN example TEXT',
+    'ALTER TABLE student_word_cards ADD COLUMN example TEXT',
+  ];
+  for (const sql of exampleColumns) {
+    try {
+      db.exec(sql);
+    } catch {
+      // колонка вже є — пропускаємо
     }
   }
 
