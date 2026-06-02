@@ -22,6 +22,7 @@ const PORT = process.env.PORT || 3001;
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const requestLogPath = path.join(__dirname, 'data', 'request.log');
+const iotPath = path.join(__dirname, '..', 'iot');
 fs.mkdirSync(path.dirname(requestLogPath), { recursive: true });
 
 // не приймаємо JSON більше 100 КБ
@@ -104,6 +105,11 @@ app.use('/api', studentSetsRouter);
 app.use('/api', adminRouter);
 app.use('/api', statsRouter);
 
+// IoT-симулятор (статичні файли)
+app.get('/iot', (req, res) => res.redirect('/iot/'));
+app.use('/iot', express.static(iotPath));
+
 app.listen(PORT, () => {
   console.log('http://localhost:' + PORT);
+  console.log('IoT: http://localhost:' + PORT + '/iot/');
 });

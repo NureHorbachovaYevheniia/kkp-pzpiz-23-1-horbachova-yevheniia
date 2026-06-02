@@ -1,5 +1,4 @@
-// IoT-симулятор Learnly — простий клієнт для API сервера
-const API = 'http://localhost:3001/api';
+const API = '/api';
 const TOKEN_KEY = 'learnly_iot_token';
 
 const screen = document.getElementById('screen');
