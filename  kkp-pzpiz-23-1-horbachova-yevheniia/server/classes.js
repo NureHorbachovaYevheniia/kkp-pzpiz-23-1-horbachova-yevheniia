@@ -230,4 +230,44 @@ router.post('/classes/join', requireAuth, requireStudent, (req, res) => {
   return res.status(201).json({ ok: true, class: cls, already_member: false });
 });
 
+// викладач додає учня до свого класу за email
+router.post('/classes/:id/students', requireAuth, requireTeacher, (req, res) => {
+  const classId = Number(req.params.id);
+  if (!Number.isInteger(classId) || classId < 1) {
+    return res.status(400).json({ error: 'Невірний id класу' });
+  }
+
+  const cls = getClassForTeacher(classId, req.user.id);
+  if (!cls) {
+    return res.status(404).json({ error: 'Клас не знайдено' });
+  }
+
+  const email = String(req.body.email || '').trim().toLowerCase();
+  if (!email) {
+    return res.status(400).json({ error: 'Вкажіть email учня' });
+  }
+
+  const db = getDb();
+  const student = db
+    .prepare("SELECT id, name, email FROM users WHERE email = ? AND role = 'student'")
+    .get(email);
+  if (!student) {
+    return res.status(404).json({ error: 'Учня з таким email не знайдено' });
+  }
+
+  const existing = db
+    .prepare('SELECT id FROM class_members WHERE class_id = ? AND student_id = ?')
+    .get(classId, student.id);
+  if (existing) {
+    return res.json({ ok: true, student, already_member: true });
+  }
+
+  db.prepare('INSERT INTO class_members (class_id, student_id) VALUES (?, ?)').run(
+    classId,
+    student.id,
+  );
+
+  return res.status(201).json({ ok: true, student, already_member: false });
+});
+
 export default router;
