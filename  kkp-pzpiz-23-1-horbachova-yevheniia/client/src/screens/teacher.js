@@ -15,6 +15,10 @@ const LANGUAGES = [
   'Українська',
 ];
 
+function deadlineInputValue(deadline) {
+  return String(deadline || '').includes('T') ? deadline : deadline + 'T23:59';
+}
+
 export async function renderTeacherDashboard(root, navigate) {
   const [dash, classes, sets] = await Promise.all([
     api('/api/teacher/dashboard'),
@@ -203,7 +207,8 @@ export async function renderTeacherClass(root, navigate) {
             ? a.status === 'active'
               ? `<button type="button" class="btn btn--ghost btn--sm close-test" data-id="${a.id}">Закрити тест</button>`
               : ''
-            : `<button type="button" class="btn btn--secondary btn--sm activate-test" data-id="${a.id}" data-deadline="${escapeHtml(a.deadline)}">Активувати тест</button>`
+            : `<input type="datetime-local" class="test-deadline" data-id="${a.id}" value="${escapeHtml(deadlineInputValue(a.deadline))}" />
+               <button type="button" class="btn btn--secondary btn--sm activate-test" data-id="${a.id}">Активувати тест</button>`
         }
       </li>`,
     )
@@ -302,13 +307,12 @@ export async function renderTeacherClass(root, navigate) {
 
   root.querySelectorAll('.activate-test').forEach((btn) => {
     btn.addEventListener('click', async () => {
-      const deadline = window.prompt(
-        'Введіть дедлайн тесту YYYY-MM-DDTHH:mm',
-        btn.getAttribute('data-deadline'),
-      );
+      const id = btn.getAttribute('data-id');
+      const input = root.querySelector('.test-deadline[data-id="' + id + '"]');
+      const deadline = input ? input.value : '';
       if (!deadline) return;
       try {
-        await api('/api/assignments/' + btn.getAttribute('data-id') + '/activate-test', {
+        await api('/api/assignments/' + id + '/activate-test', {
           method: 'PUT',
           body: JSON.stringify({ deadline }),
         });
