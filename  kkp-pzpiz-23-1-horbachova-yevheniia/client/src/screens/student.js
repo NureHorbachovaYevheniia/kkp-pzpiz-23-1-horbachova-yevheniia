@@ -77,6 +77,7 @@ export async function renderStudentDashboard(root, navigate) {
           <h2 class="deck-heading">${escapeHtml(t('stats.myProgress'))}</h2>
           <div class="stat-cards">
             <div class="stat-card">${escapeHtml(t('stats.testsDone', { count: summary.tests_count }))}</div>
+            <div class="stat-card">${escapeHtml(t('stats.avgScore', { score: summary.avg_score != null ? summary.avg_score : '—' }))}</div>
             <div class="stat-card">${escapeHtml(t('stats.wordsKnown', { count: summary.words_known }))}</div>
           </div>
           <div class="chart-box">
@@ -700,13 +701,26 @@ export function renderTestResults(root, navigate) {
     return;
   }
 
+  const allCorrect = r.wrong === 0 || (Array.isArray(r.wrong_words) && r.wrong_words.length === 0);
+  const wrongList = Array.isArray(r.wrong_words) && r.wrong_words.length > 0
+    ? r.wrong_words
+        .map((w) => `<li>${escapeHtml(t('student.testResults.wrongLine', { word: w.word, translation: w.correct_translation }))}</li>`)
+        .join('')
+    : '';
+
   root.replaceChildren(
     el(`
       <main class="box box--wide">
         ${headerBar(appState.user, null, `<button type="button" id="back" class="btn btn--ghost btn--sm">${escapeHtml(t('btn.backCabinet'))}</button>`).outerHTML}
         <h2 class="deck-heading">${escapeHtml(t('student.testResults.title'))}</h2>
-        <p class="study-done-msg">${escapeHtml(r.message || 'Тест здано.')}</p>
-        <p class="hint">Результат буде доступний викладачу.</p>
+        ${r.score != null
+          ? `<p class="study-done-msg">${escapeHtml(t('student.testResults.scoreLabel'))}: <strong>${r.score}%</strong> (${r.correct ?? 0} / ${r.total ?? 0})</p>`
+          : ''}
+        ${allCorrect
+          ? `<p class="feedback feedback--ok">${escapeHtml(t('student.testResults.allCorrect'))}</p>`
+          : wrongList
+            ? `<p class="deck-hint">${escapeHtml(t('student.testResults.reviewWords'))}</p><ul class="sets">${wrongList}</ul>`
+            : ''}
         <button type="button" id="done" class="btn btn--primary">${escapeHtml(t('btn.done'))}</button>
       </main>
     `),

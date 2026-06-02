@@ -25,6 +25,32 @@ const TABLE_ORDER = [
   'student_test_results',
 ];
 
+// системна статистика для адмін-панелі
+router.get('/admin/stats', requireAdmin, (req, res) => {
+  const db = getDb();
+  const users = db.prepare('SELECT COUNT(*) AS n FROM users').get().n;
+  const students = db.prepare("SELECT COUNT(*) AS n FROM users WHERE role = 'student'").get().n;
+  const teachers = db.prepare("SELECT COUNT(*) AS n FROM users WHERE role = 'teacher'").get().n;
+  const classes = db.prepare('SELECT COUNT(*) AS n FROM classes').get().n;
+  const assignments = db.prepare('SELECT COUNT(*) AS n FROM assignments').get().n;
+  const activeAssignments = db.prepare("SELECT COUNT(*) AS n FROM assignments WHERE status = 'active'").get().n;
+  const testsCompleted = db.prepare('SELECT COUNT(*) AS n FROM test_results').get().n;
+  const wordSets = db.prepare('SELECT COUNT(*) AS n FROM word_sets').get().n;
+  const wordCards = db.prepare('SELECT COUNT(*) AS n FROM word_cards').get().n;
+
+  res.json({
+    users,
+    students,
+    teachers,
+    classes,
+    assignments,
+    active_assignments: activeAssignments,
+    tests_completed: testsCompleted,
+    word_sets: wordSets,
+    word_cards: wordCards,
+  });
+});
+
 // список користувачів (без пароля)
 router.get('/admin/users', requireAdmin, (req, res) => {
   const users = getDb()

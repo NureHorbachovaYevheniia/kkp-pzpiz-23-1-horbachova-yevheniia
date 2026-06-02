@@ -164,10 +164,14 @@ router.post('/assignments/:id/test/submit', requireAuth, requireStudent, (req, r
     return { score, total, correct, wrong, wrongWords };
   });
 
-  tx();
+  const result = tx();
   return res.json({
     ok: true,
-    message: 'Тест здано. Результат бачить викладач.',
+    score: result.score,
+    total: result.total,
+    correct: result.correct,
+    wrong: result.wrong,
+    wrong_words: result.wrongWords,
   });
 });
 

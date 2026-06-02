@@ -36,7 +36,10 @@ function roleLabel(role) {
 }
 
 export async function renderAdminDashboard(root, navigate) {
-  const users = await api('/api/admin/users');
+  const [users, stats] = await Promise.all([
+    api('/api/admin/users'),
+    api('/api/admin/stats'),
+  ]);
 
   const rows = (users || [])
     .map((u) => {
@@ -61,6 +64,20 @@ export async function renderAdminDashboard(root, navigate) {
       <section class="deck-section">
         <h1 class="deck-heading">${escapeHtml(t('admin.dashboard.title'))}</h1>
         <p class="deck-hint">${escapeHtml(t('admin.dashboard.hint'))}</p>
+      </section>
+
+      <section class="deck-section">
+        <h2 class="deck-heading">${escapeHtml(t('admin.stats'))}</h2>
+        <div class="stat-cards">
+          <div class="stat-card">${escapeHtml(t('admin.stats.users', { n: stats?.users ?? 0 }))}</div>
+          <div class="stat-card">${escapeHtml(t('admin.stats.students', { n: stats?.students ?? 0 }))}</div>
+          <div class="stat-card">${escapeHtml(t('admin.stats.teachers', { n: stats?.teachers ?? 0 }))}</div>
+          <div class="stat-card">${escapeHtml(t('admin.stats.classes', { n: stats?.classes ?? 0 }))}</div>
+          <div class="stat-card">${escapeHtml(t('admin.stats.assignments', { n: stats?.assignments ?? 0, active: stats?.active_assignments ?? 0 }))}</div>
+          <div class="stat-card">${escapeHtml(t('admin.stats.tests', { n: stats?.tests_completed ?? 0 }))}</div>
+          <div class="stat-card">${escapeHtml(t('admin.stats.wordSets', { n: stats?.word_sets ?? 0 }))}</div>
+          <div class="stat-card">${escapeHtml(t('admin.stats.wordCards', { n: stats?.word_cards ?? 0 }))}</div>
+        </div>
       </section>
 
       <section class="deck-section">

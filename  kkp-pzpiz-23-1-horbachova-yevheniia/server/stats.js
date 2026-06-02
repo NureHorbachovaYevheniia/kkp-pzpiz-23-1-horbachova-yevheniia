@@ -12,10 +12,10 @@ router.get('/student/stats', requireAuth, requireStudent, (req, res) => {
   const db = getDb();
   const studentId = req.user.id;
 
-  // учень бачить тільки кількість зданих тестів, без оцінок
   const summary = db
     .prepare(
-      `SELECT COUNT(*) AS tests_count
+      `SELECT COUNT(*) AS tests_count,
+              ROUND(AVG(score), 1) AS avg_score
        FROM test_results
        WHERE student_id = ?`,
     )
@@ -51,6 +51,7 @@ router.get('/student/stats', requireAuth, requireStudent, (req, res) => {
   return res.json({
     summary: {
       tests_count: summary?.tests_count || 0,
+      avg_score: summary?.avg_score ?? null,
       words_known: progress.know || 0,
     },
     recent_tests: recentTests,
