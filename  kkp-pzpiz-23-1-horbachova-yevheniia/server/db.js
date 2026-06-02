@@ -250,3 +250,16 @@ export function getDb() {
   if (!db) throw new Error('База не ініціалізована');
   return db;
 }
+
+// шлях до файлу app.db
+export function getDbPath() {
+  return dbPath;
+}
+
+// закриваємо з'єднання перед заміною файлу бази
+export function closeDb() {
+  if (db) {
+    db.close();
+    db = null;
+  }
+}
