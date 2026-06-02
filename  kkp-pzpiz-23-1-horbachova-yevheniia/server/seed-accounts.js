@@ -1,4 +1,4 @@
-//демо-акаунти (вчитель і двоє учнів), якщо їх ще немає.
+// Демо-акаунти
 import bcrypt from 'bcrypt';
 import { initDb, getDb } from './db.js';
 
@@ -6,6 +6,12 @@ initDb();
 const db = getDb();
 
 const accounts = [
+  {
+    name: 'Адмін Системи',
+    email: 'admin@learnly.local',
+    password: 'admin123',
+    role: 'admin',
+  },
   {
     name: 'Олена Викладач',
     email: 'teacher@learnly.local',
