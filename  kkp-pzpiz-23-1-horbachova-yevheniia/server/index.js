@@ -15,7 +15,37 @@ initDb();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(express.json());
+// не приймаємо JSON більше 100 КБ
+app.use(express.json({ limit: '100kb' }));
+
+// простий ліміт: до 60 запитів на хвилину з одного IP
+const requestCounts = new Map();
+app.use('/api', (req, res, next) => {
+  const ip = req.ip || 'unknown';
+  const now = Date.now();
+  const windowMs = 60 * 1000;
+  const maxRequests = 60;
+
+  let record = requestCounts.get(ip);
+  if (!record || now - record.start > windowMs) {
+    record = { start: now, count: 0 };
+    requestCounts.set(ip, record);
+  }
+  record.count += 1;
+
+  if (record.count > maxRequests) {
+    return res.status(429).json({ error: 'Забагато запитів, спробуйте пізніше' });
+  }
+  next();
+});
+
+// зрозуміла помилка, якщо тіло занадто велике
+app.use((err, req, res, next) => {
+  if (err.type === 'entity.too.large') {
+    return res.status(413).json({ error: 'Тіло запиту занадто велике' });
+  }
+  next(err);
+});
 
 // дозволяємо запити з клієнта CORS
 app.use((req, res, next) => {
