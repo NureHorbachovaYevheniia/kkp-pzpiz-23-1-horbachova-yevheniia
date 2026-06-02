@@ -15,6 +15,11 @@ export const appState = {
   studyChecked: false,
   studyTyped: '',
   studyLastCorrect: false,
+  flashCards: null,
+  flashQueue: null,
+  flashLanguage: '',
+  flashIndex: 0,
+  flashFlipped: false,
   testQuestions: null,
   testAnswers: null,
   testIndex: 0,
@@ -33,6 +38,14 @@ export function resetStudyState() {
   appState.studyChecked = false;
   appState.studyTyped = '';
   appState.studyLastCorrect = false;
+}
+
+export function resetFlashState() {
+  appState.flashCards = null;
+  appState.flashQueue = null;
+  appState.flashLanguage = '';
+  appState.flashIndex = 0;
+  appState.flashFlipped = false;
 }
 
 export function resetTestState() {
