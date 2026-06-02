@@ -58,6 +58,16 @@ export async function renderStudentDashboard(root, navigate) {
     .join('');
 
   const summary = stats?.summary || { tests_count: 0, words_known: 0 };
+  const recentTests = stats?.recent_tests || [];
+
+  const recentList = recentTests
+    .map(
+      (r) => `<li class="set-row">
+        <span class="set-title">${escapeHtml(r.assignment_title)}</span>
+        <span class="meta">${escapeHtml(formatDate(r.completed_at))} · ${r.score}%</span>
+      </li>`,
+    )
+    .join('');
 
   root.replaceChildren(
     el(`
@@ -73,6 +83,10 @@ export async function renderStudentDashboard(root, navigate) {
             <p class="deck-hint">${escapeHtml(t('stats.chart.progress'))}</p>
             <canvas id="student-progress-chart"></canvas>
           </div>
+          ${recentList ? `
+            <p class="deck-hint">${escapeHtml(t('stats.chart.recentTests'))}</p>
+            <ul class="sets">${recentList}</ul>
+          ` : ''}
         </section>
         <section class="deck-section">
           <h2 class="deck-heading">${escapeHtml(t('student.activeAssignments'))}</h2>

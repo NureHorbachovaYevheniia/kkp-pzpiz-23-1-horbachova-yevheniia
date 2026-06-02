@@ -37,12 +37,23 @@ router.get('/student/stats', requireAuth, requireStudent, (req, res) => {
     progress[row.status] = row.count;
   }
 
+  const recentTests = db
+    .prepare(
+      `SELECT tr.score, tr.completed_at, a.title AS assignment_title
+       FROM test_results tr
+       INNER JOIN assignments a ON a.id = tr.assignment_id
+       WHERE tr.student_id = ?
+       ORDER BY tr.completed_at DESC
+       LIMIT 5`,
+    )
+    .all(studentId);
+
   return res.json({
     summary: {
       tests_count: summary?.tests_count || 0,
       words_known: progress.know || 0,
     },
-    recent_tests: [],
+    recent_tests: recentTests,
     progress,
   });
 });
