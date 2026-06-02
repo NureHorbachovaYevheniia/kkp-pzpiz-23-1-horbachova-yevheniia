@@ -122,6 +122,24 @@ router.put('/assignments/:id/activate-test', requireAuth, requireTeacher, (req, 
   return res.json(row);
 });
 
+// викладач закриває тестування
+router.put('/assignments/:id/close-test', requireAuth, requireTeacher, (req, res) => {
+  const assignmentId = Number(req.params.id);
+  if (!Number.isInteger(assignmentId) || assignmentId < 1) {
+    return res.status(400).json({ error: 'Невірний id завдання' });
+  }
+
+  const assignment = getAssignmentById(assignmentId);
+  if (!canAccessAssignment(req.user, assignment)) {
+    return res.status(404).json({ error: 'Завдання не знайдено' });
+  }
+
+  getDb().prepare("UPDATE assignments SET status = 'closed' WHERE id = ?").run(assignmentId);
+
+  const row = getAssignmentById(assignmentId);
+  return res.json(row);
+});
+
 // одне завдання (доступне і викладачу, і учню класу)
 router.get('/assignments/:id', requireAuth, (req, res) => {
   const assignmentId = Number(req.params.id);

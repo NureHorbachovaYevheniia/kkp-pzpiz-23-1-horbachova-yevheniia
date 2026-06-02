@@ -200,7 +200,9 @@ export async function renderTeacherClass(root, navigate) {
         <span class="meta">${escapeHtml(a.word_set_title)} · ${escapeHtml(t('teacher.deadlineUntil', { date: formatDate(a.deadline) }))} · ${escapeHtml(statusLabel(a.mode))}</span>
         ${
           a.mode === 'test'
-            ? ''
+            ? a.status === 'active'
+              ? `<button type="button" class="btn btn--ghost btn--sm close-test" data-id="${a.id}">Закрити тест</button>`
+              : ''
             : `<button type="button" class="btn btn--secondary btn--sm activate-test" data-id="${a.id}" data-deadline="${escapeHtml(a.deadline)}">Активувати тест</button>`
         }
       </li>`,
@@ -306,6 +308,20 @@ export async function renderTeacherClass(root, navigate) {
         await api('/api/assignments/' + btn.getAttribute('data-id') + '/activate-test', {
           method: 'PUT',
           body: JSON.stringify({ deadline }),
+        });
+        await renderTeacherClass(root, navigate);
+      } catch (e2) {
+        window.alert(e2.message);
+      }
+    });
+  });
+
+  root.querySelectorAll('.close-test').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      if (!window.confirm('Закрити тестування?')) return;
+      try {
+        await api('/api/assignments/' + btn.getAttribute('data-id') + '/close-test', {
+          method: 'PUT',
         });
         await renderTeacherClass(root, navigate);
       } catch (e2) {
