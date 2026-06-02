@@ -13,6 +13,7 @@ import {
 import { appState, resetStudyState, resetTestState, resetFlashState } from '../state.js';
 import { headerBar, bindLogout } from './auth.js';
 import { t } from '../i18n.js';
+import { renderBarChart, renderDoughnutChart } from '../charts.js';
 
 const LANGUAGES = [
   'English',
@@ -37,7 +38,10 @@ function studyBackScreen() {
 }
 
 export async function renderStudentDashboard(root, navigate) {
-  const assignments = await api('/api/student/assignments');
+  const [assignments, stats] = await Promise.all([
+    api('/api/student/assignments'),
+    api('/api/student/stats'),
+  ]);
 
   const assignList = (assignments || [])
     .map(
@@ -49,10 +53,28 @@ export async function renderStudentDashboard(root, navigate) {
     )
     .join('');
 
+  const summary = stats?.summary || { tests_count: 0, avg_score: 0, words_known: 0 };
+
   root.replaceChildren(
     el(`
       <main class="box box--wide box--deck">
         ${headerBar(appState.user, null, `<button type="button" id="my-sets" class="btn btn--primary btn--sm">${escapeHtml(t('student.mySets'))}</button><button type="button" id="join" class="btn btn--secondary btn--sm">${escapeHtml(t('student.joinBtn'))}</button>`).outerHTML}
+        <section class="deck-section">
+          <h2 class="deck-heading">${escapeHtml(t('stats.myProgress'))}</h2>
+          <div class="stat-cards">
+            <div class="stat-card">${escapeHtml(t('stats.testsDone', { count: summary.tests_count }))}</div>
+            <div class="stat-card">${escapeHtml(t('stats.avgScore', { score: summary.avg_score || 0 }))}</div>
+            <div class="stat-card">${escapeHtml(t('stats.wordsKnown', { count: summary.words_known }))}</div>
+          </div>
+          <div class="chart-box">
+            <p class="deck-hint">${escapeHtml(t('stats.chart.recentTests'))}</p>
+            <canvas id="student-tests-chart"></canvas>
+          </div>
+          <div class="chart-box">
+            <p class="deck-hint">${escapeHtml(t('stats.chart.progress'))}</p>
+            <canvas id="student-progress-chart"></canvas>
+          </div>
+        </section>
         <section class="deck-section">
           <h2 class="deck-heading">${escapeHtml(t('student.activeAssignments'))}</h2>
           ${assignList ? `<ul class="sets">${assignList}</ul>` : `<p class="empty-msg">${escapeHtml(t('student.noAssignments'))}</p>`}
@@ -60,6 +82,33 @@ export async function renderStudentDashboard(root, navigate) {
       </main>
     `),
   );
+
+  // bar chart: останні тести
+  const recentTests = stats?.recent_tests || [];
+  const testsCanvas = root.querySelector('#student-tests-chart');
+  if (recentTests.length > 0) {
+    renderBarChart(
+      testsCanvas,
+      recentTests.map((r) => r.title),
+      recentTests.map((r) => r.score),
+      t('stats.table.score'),
+    );
+  }
+
+  // doughnut chart: прогрес слів
+  const progress = stats?.progress || {};
+  const progressLabels = ['know', 'almost', 'repeat', 'not_started'];
+  const progressValues = progressLabels.map((key) => progress[key] || 0);
+  const hasProgress = progressValues.some((n) => n > 0);
+  const progressCanvas = root.querySelector('#student-progress-chart');
+  if (hasProgress) {
+    renderDoughnutChart(
+      progressCanvas,
+      progressLabels.map((key) => statusLabel(key)),
+      progressValues,
+    );
+  }
+
   bindLogout(root, navigate);
   root.querySelector('#my-sets').addEventListener('click', () => navigate('student-sets'));
   root.querySelector('#join').addEventListener('click', () => navigate('student-join'));
