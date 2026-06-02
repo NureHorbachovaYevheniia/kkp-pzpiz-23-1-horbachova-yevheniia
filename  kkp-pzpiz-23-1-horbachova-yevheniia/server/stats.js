@@ -7,33 +7,19 @@ import { getClassForTeacher, computeStudentAssignmentStatus } from './helpers.js
 
 const router = Router();
 
-// статистика учня: скільки тестів, середній бал, останні результати
+// статистика учня
 router.get('/student/stats', requireAuth, requireStudent, (req, res) => {
   const db = getDb();
   const studentId = req.user.id;
 
-  // скільки тестів здано і який середній бал
+  // учень бачить тільки кількість зданих тестів, без оцінок
   const summary = db
     .prepare(
-      `SELECT
-         COUNT(*) AS tests_count,
-         ROUND(AVG(score), 1) AS avg_score
+      `SELECT COUNT(*) AS tests_count
        FROM test_results
        WHERE student_id = ?`,
     )
     .get(studentId);
-
-  // останні 10 результатів тестів
-  const recentTests = db
-    .prepare(
-      `SELECT a.title, tr.score, tr.completed_at
-       FROM test_results tr
-       INNER JOIN assignments a ON a.id = tr.assignment_id
-       WHERE tr.student_id = ?
-       ORDER BY tr.completed_at DESC
-       LIMIT 10`,
-    )
-    .all(studentId);
 
   // скільки слів у кожному статусі (know, almost, repeat...)
   const progressRows = db
@@ -54,10 +40,9 @@ router.get('/student/stats', requireAuth, requireStudent, (req, res) => {
   return res.json({
     summary: {
       tests_count: summary?.tests_count || 0,
-      avg_score: summary?.avg_score || 0,
       words_known: progress.know || 0,
     },
-    recent_tests: recentTests,
+    recent_tests: [],
     progress,
   });
 });

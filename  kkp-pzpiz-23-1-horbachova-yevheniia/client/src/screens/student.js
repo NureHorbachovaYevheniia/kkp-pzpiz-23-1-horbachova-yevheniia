@@ -13,7 +13,7 @@ import {
 import { appState, resetStudyState, resetTestState, resetFlashState } from '../state.js';
 import { headerBar, bindLogout } from './auth.js';
 import { t } from '../i18n.js';
-import { renderBarChart, renderDoughnutChart } from '../charts.js';
+import { renderDoughnutChart } from '../charts.js';
 
 const LANGUAGES = [
   'English',
@@ -53,7 +53,7 @@ export async function renderStudentDashboard(root, navigate) {
     )
     .join('');
 
-  const summary = stats?.summary || { tests_count: 0, avg_score: 0, words_known: 0 };
+  const summary = stats?.summary || { tests_count: 0, words_known: 0 };
 
   root.replaceChildren(
     el(`
@@ -63,12 +63,7 @@ export async function renderStudentDashboard(root, navigate) {
           <h2 class="deck-heading">${escapeHtml(t('stats.myProgress'))}</h2>
           <div class="stat-cards">
             <div class="stat-card">${escapeHtml(t('stats.testsDone', { count: summary.tests_count }))}</div>
-            <div class="stat-card">${escapeHtml(t('stats.avgScore', { score: summary.avg_score || 0 }))}</div>
             <div class="stat-card">${escapeHtml(t('stats.wordsKnown', { count: summary.words_known }))}</div>
-          </div>
-          <div class="chart-box">
-            <p class="deck-hint">${escapeHtml(t('stats.chart.recentTests'))}</p>
-            <canvas id="student-tests-chart"></canvas>
           </div>
           <div class="chart-box">
             <p class="deck-hint">${escapeHtml(t('stats.chart.progress'))}</p>
@@ -82,18 +77,6 @@ export async function renderStudentDashboard(root, navigate) {
       </main>
     `),
   );
-
-  // bar chart: останні тести
-  const recentTests = stats?.recent_tests || [];
-  const testsCanvas = root.querySelector('#student-tests-chart');
-  if (recentTests.length > 0) {
-    renderBarChart(
-      testsCanvas,
-      recentTests.map((r) => r.title),
-      recentTests.map((r) => r.score),
-      t('stats.table.score'),
-    );
-  }
 
   // doughnut chart: прогрес слів
   const progress = stats?.progress || {};
