@@ -9,7 +9,7 @@ import {
   speakWord,
   speechSupported,
 } from '../utils.js';
-import { appState, resetStudyState, resetTestState } from '../state.js';
+import { appState, resetStudyState, resetTestState, resetFlashState } from '../state.js';
 import { headerBar, bindLogout } from './auth.js';
 import { t } from '../i18n.js';
 
@@ -469,6 +469,103 @@ export async function renderStudy(root, navigate) {
     appState.studyTyped = '';
     appState.studyLastCorrect = false;
     renderStudy(root, navigate);
+  });
+}
+
+export async function renderFlashcards(root, navigate) {
+  // картки беремо з того самого ендпоінта, що й режим навчання
+  if (!appState.flashCards) {
+    const data = await api(studyBase() + '/study');
+    const cards = data.cards || [];
+    appState.flashCards = cards;
+    appState.flashQueue = shuffleArray(cards.map((_, i) => i));
+    appState.flashLanguage = data.language || (data.set && data.set.language) || '';
+    appState.flashIndex = 0;
+    appState.flashFlipped = false;
+  }
+
+  const queue = appState.flashQueue;
+  const total = queue.length;
+  const idx = queue[appState.flashIndex];
+  const card = appState.flashCards[idx];
+  const done = !card || total === 0;
+
+  let body;
+  if (done) {
+    const msg = total === 0 ? t('student.study.noWords') : t('student.flash.done');
+    body = `<p class="study-done-msg">${escapeHtml(msg)}</p>
+      <button type="button" id="back-flash" class="btn btn--primary">${escapeHtml(t('student.study.back'))}</button>`;
+  } else if (appState.flashFlipped) {
+    // зворотна сторона: переклад + три кнопки
+    body = `
+      <p class="counter">${appState.flashIndex + 1} / ${total}</p>
+      <div class="flashcard flashcard--flipped" id="flashcard">
+        <p class="card-tr">${escapeHtml(card.translation)}</p>
+      </div>
+      <div class="card-actions card-actions--stack">
+        <button type="button" class="btn btn--primary flash-answer" data-status="know">${escapeHtml(t('student.flash.know'))}</button>
+        <button type="button" class="btn btn--secondary flash-answer" data-status="almost">${escapeHtml(t('student.flash.almost'))}</button>
+        <button type="button" class="btn btn--ghost flash-answer" data-status="repeat">${escapeHtml(t('student.flash.dontKnow'))}</button>
+      </div>`;
+  } else {
+    // лицьова сторона: слово + фото + звук + приклад
+    body = `
+      <p class="counter">${appState.flashIndex + 1} / ${total}</p>
+      <div class="flashcard" id="flashcard">
+        ${card.image_url ? `<img class="card-image" src="${escapeHtml(card.image_url)}" alt="${escapeHtml(card.word)}" />` : ''}
+        <p class="card-term">${escapeHtml(card.word)}</p>
+        ${card.example ? `<p class="card-example">${escapeHtml(card.example)}</p>` : ''}
+        ${speechSupported() ? `<button type="button" id="speak-word" class="btn btn--ghost btn--sm">🔊 ${escapeHtml(t('student.study.listen'))}</button>` : ''}
+      </div>
+      <p class="study-hint">${escapeHtml(t('student.flash.tapToFlip'))}</p>`;
+  }
+
+  root.replaceChildren(
+    el(`
+      <main class="box box--wide">
+        ${headerBar(appState.user, null, `<button type="button" id="back" class="btn btn--ghost btn--sm">${escapeHtml(t('btn.backAssignment'))}</button>`).outerHTML}
+        <h2 class="deck-heading">${escapeHtml(t('student.flash.title'))}</h2>
+        ${body}
+      </main>
+    `),
+  );
+  bindLogout(root, navigate);
+  root.querySelector('#back')?.addEventListener('click', () => {
+    resetFlashState();
+    navigate(studyBackScreen());
+  });
+  root.querySelector('#back-flash')?.addEventListener('click', () => {
+    resetFlashState();
+    navigate(studyBackScreen());
+  });
+
+  // клік по картці перевертає її
+  root.querySelector('#flashcard')?.addEventListener('click', (e) => {
+    if (e.target.closest('#speak-word')) return;
+    if (!appState.flashFlipped) {
+      appState.flashFlipped = true;
+      renderFlashcards(root, navigate);
+    }
+  });
+
+  root.querySelector('#speak-word')?.addEventListener('click', () => {
+    if (card) speakWord(card.word, appState.flashLanguage);
+  });
+
+  root.querySelectorAll('.flash-answer').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const status = btn.getAttribute('data-status');
+      try {
+        await api(studyBase() + '/progress', {
+          method: 'POST',
+          body: JSON.stringify({ word_card_id: card.id, status }),
+        });
+      } catch {
+      }
+      appState.flashIndex += 1;
+      appState.flashFlipped = false;
+      renderFlashcards(root, navigate);
+    });
   });
 }
 
