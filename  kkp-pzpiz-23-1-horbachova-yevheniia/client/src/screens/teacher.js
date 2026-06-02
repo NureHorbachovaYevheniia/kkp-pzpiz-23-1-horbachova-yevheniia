@@ -198,6 +198,11 @@ export async function renderTeacherClass(root, navigate) {
       (a) => `<li class="set-row">
         <span class="set-title">${escapeHtml(a.title)}</span>
         <span class="meta">${escapeHtml(a.word_set_title)} · ${escapeHtml(t('teacher.deadlineUntil', { date: formatDate(a.deadline) }))} · ${escapeHtml(statusLabel(a.mode))}</span>
+        ${
+          a.mode === 'test'
+            ? ''
+            : `<button type="button" class="btn btn--secondary btn--sm activate-test" data-id="${a.id}" data-deadline="${escapeHtml(a.deadline)}">Активувати тест</button>`
+        }
       </li>`,
     )
     .join('');
@@ -289,6 +294,22 @@ export async function renderTeacherClass(root, navigate) {
   bindLogout(root, navigate);
   root.querySelector('#back').addEventListener('click', () => navigate('teacher-dashboard'));
   root.querySelector('#new-assignment').addEventListener('click', () => navigate('teacher-create-assignment'));
+
+  root.querySelectorAll('.activate-test').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const deadline = window.prompt('Введіть дедлайн тесту YYYY-MM-DD', btn.getAttribute('data-deadline'));
+      if (!deadline) return;
+      try {
+        await api('/api/assignments/' + btn.getAttribute('data-id') + '/activate-test', {
+          method: 'PUT',
+          body: JSON.stringify({ deadline }),
+        });
+        await renderTeacherClass(root, navigate);
+      } catch (e2) {
+        window.alert(e2.message);
+      }
+    });
+  });
 
   root.querySelector('#edit-class').addEventListener('click', () => {
     const box = root.querySelector('#edit-class-box');
