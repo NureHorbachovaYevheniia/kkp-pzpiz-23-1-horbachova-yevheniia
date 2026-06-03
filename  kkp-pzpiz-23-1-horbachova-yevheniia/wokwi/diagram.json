@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "author": "Learnly",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "wokwi-esp32-devkit-v1",
+      "id": "esp",
+      "top": 100,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "type": "board-ssd1306",
+      "id": "oled1",
+      "top": -120,
+      "left": -200,
+      "attrs": {
+        "i2cAddress": "0x3c"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn1",
+      "top": 310,
+      "left": -200,
+      "attrs": {
+        "color": "green",
+        "label": "Переклад"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn2",
+      "top": 310,
+      "left": -60,
+      "attrs": {
+        "color": "blue",
+        "label": "Знаю"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn3",
+      "top": 310,
+      "left": 80,
+      "attrs": {
+        "color": "red",
+        "label": "Повторити"
+      }
+    }
+  ],
+  "connections": [
+    ["oled1:GND", "esp:GND.1", "black", []],
+    ["oled1:VCC", "esp:3V3", "red", []],
+    ["oled1:SCL", "esp:D22", "blue", []],
+    ["oled1:SDA", "esp:D21", "green", []],
+
+    ["btn1:1.l", "esp:D25", "green", []],
+    ["btn1:2.l", "esp:GND.2", "black", []],
+
+    ["btn2:1.l", "esp:D26", "blue", []],
+    ["btn2:2.l", "esp:GND.2", "black", []],
+
+    ["btn3:1.l", "esp:D27", "red", []],
+    ["btn3:2.l", "esp:GND.2", "black", []]
+  ]
+}

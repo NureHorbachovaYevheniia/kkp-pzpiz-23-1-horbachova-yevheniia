@@ -1,4 +1,3 @@
-// Ліміти безкоштовного плану (преміум знімає обмеження — на майбутнє).
 export const MAX_TEACHER_CLASSES = 3;
 export const MAX_TEACHER_WORD_SETS = 10;
 export const MAX_STUDENT_SETS = 10;
