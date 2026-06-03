@@ -2,6 +2,7 @@ import { api, setToken, logout } from '../api.js';
 import { el, escapeHtml } from '../utils.js';
 import { appState } from '../state.js';
 import { t, syncUserPreferences } from '../i18n.js';
+import { bindPremiumAside } from '../limits.js';
 
 export function renderHome(root, navigate) {
   root.replaceChildren(
@@ -379,14 +380,22 @@ export function renderBrandAccount(user, navigate) {
     slot.replaceChildren();
     return;
   }
+  const premiumBtn =
+    user.role === 'teacher'
+      ? `<button type="button" id="buy-premium" class="btn btn--primary btn--sm">${escapeHtml(t('premium.buy'))}</button>`
+      : '';
   slot.replaceChildren(
     el(`
       <div class="brand__account-inner">
+        ${premiumBtn}
         <button type="button" id="brand-profile" class="btn btn--ghost btn--sm">${escapeHtml(t('btn.profile'))}</button>
         <button type="button" id="brand-logout" class="btn brand__logout btn--sm">${escapeHtml(t('btn.logout'))}</button>
       </div>
     `),
   );
+  if (user.role === 'teacher') {
+    bindPremiumAside(slot);
+  }
   slot.querySelector('#brand-profile').addEventListener('click', () => navigate('profile'));
   slot.querySelector('#brand-logout').addEventListener('click', () => {
     logout();

@@ -7,7 +7,7 @@ import { getAssignmentById, canAccessAssignment, shuffleArray, datetimeValue } f
 
 const router = Router();
 
-// прості правила доступу до тесту
+//правила доступу до тесту
 function testError(assignment, studentId) {
   if (assignment.mode !== 'test') {
     return 'Тест ще не активований викладачем';

@@ -1,4 +1,3 @@
-// Головний файл клієнта. Тут вирішуємо, який екран показати.
 import './style.css';
 import { api, getToken, clearToken } from './api.js';
 import { appState } from './state.js';

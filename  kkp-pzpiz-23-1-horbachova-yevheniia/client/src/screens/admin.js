@@ -5,15 +5,44 @@ import { appState } from '../state.js';
 import { headerBar, bindLogout } from './auth.js';
 import { t, translateApiError } from '../i18n.js';
 
-// запит з токеном (для файлів, не JSON)
+// запит з токеном (для файлів, не JSON); binary: true — один res.blob(), без res.text()
 async function adminFetch(path, options = {}) {
-  const headers = { ...options.headers };
+  const { binary, ...fetchOptions } = options;
+  const headers = { ...fetchOptions.headers };
   const token = getToken();
   if (token) {
     headers.Authorization = 'Bearer ' + token;
   }
-  const res = await fetch(path, { ...options, headers });
+  const res = await fetch(path, { ...fetchOptions, headers });
+
+  if (binary) {
+    if (!res.ok) {
+      const text = await res.text();
+      let data = null;
+      if (text) {
+        try {
+          data = JSON.parse(text);
+        } catch {
+          data = { error: text };
+        }
+      }
+      const msg = data && data.error ? data.error : res.statusText;
+      throw new Error(translateApiError(msg));
+    }
+    const blob = await res.blob();
+    // #region agent log
+    fetch('http://127.0.0.1:7926/ingest/0accc77e-3b7a-4359-b688-995e6fa5498f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'477594'},body:JSON.stringify({sessionId:'477594',runId:'post-fix',location:'admin.js:adminFetch:binary',message:'adminFetch binary blob ok',data:{path,blobSize:blob.size,bodyUsed:res.bodyUsed},timestamp:Date.now(),hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+    return { res, blob };
+  }
+
+  // #region agent log
+  fetch('http://127.0.0.1:7926/ingest/0accc77e-3b7a-4359-b688-995e6fa5498f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'477594'},body:JSON.stringify({sessionId:'477594',location:'admin.js:adminFetch:beforeText',message:'adminFetch before res.text()',data:{path,ok:res.ok,bodyUsed:res.bodyUsed,contentType:res.headers.get('content-type')},timestamp:Date.now(),hypothesisId:'A'})}).catch(()=>{});
+  // #endregion
   const text = await res.text();
+  // #region agent log
+  fetch('http://127.0.0.1:7926/ingest/0accc77e-3b7a-4359-b688-995e6fa5498f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'477594'},body:JSON.stringify({sessionId:'477594',location:'admin.js:adminFetch:afterText',message:'adminFetch after res.text()',data:{path,textLen:text.length,bodyUsed:res.bodyUsed},timestamp:Date.now(),hypothesisId:'A'})}).catch(()=>{});
+  // #endregion
   let data = null;
   if (text) {
     try {
@@ -152,8 +181,10 @@ export async function renderAdminDashboard(root, navigate) {
     toolsErr.textContent = '';
     toolsOk.textContent = '';
     try {
-      const { res } = await adminFetch('/api/admin/backup');
-      const blob = await res.blob();
+      const { blob } = await adminFetch('/api/admin/backup', { binary: true });
+      // #region agent log
+      fetch('http://127.0.0.1:7926/ingest/0accc77e-3b7a-4359-b688-995e6fa5498f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'477594'},body:JSON.stringify({sessionId:'477594',runId:'post-fix',location:'admin.js:backup:success',message:'backup download ready',data:{blobSize:blob.size},timestamp:Date.now(),hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;

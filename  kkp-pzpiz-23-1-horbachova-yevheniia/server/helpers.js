@@ -1,4 +1,3 @@
-// Маленькі допоміжні функції, які потрібні в кількох місцях.
 import { getDb } from './db.js';
 
 export function datetimeValue(iso) {

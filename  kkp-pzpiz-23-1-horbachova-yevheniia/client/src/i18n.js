@@ -179,7 +179,7 @@ const messages = {
     'teacher.placeholder.translation': 'Переклад',
     'teacher.placeholder.imageUrl': "Посилання на фото (необов'язково)",
     'teacher.placeholder.example': 'Приклад: I have a «dog».',
-    'teacher.placeholder.exampleHint': 'Оберніть слово в «лапки», щоб підсветити його на картці.',
+    'teacher.placeholder.exampleHint': 'Обгорніть слово в «лапки», щоб підсвітити його на картці.',
     'teacher.btn.add': 'Додати',
     'teacher.noCards': 'Немає карток.',
     'teacher.deleteCardConfirm': 'Ви точно бажаєте видалити це слово?',

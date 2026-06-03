@@ -7,10 +7,8 @@ import { renderBarChart } from '../charts.js';
 import {
   MAX_TEACHER_CLASSES,
   MAX_TEACHER_WORD_SETS,
-  bindPremiumAside,
   isAtLimit,
   limitBadgeHtml,
-  premiumAsideHtml,
 } from '../limits.js';
 
 const LANGUAGES = [
@@ -141,13 +139,11 @@ export async function renderTeacherDashboard(root, navigate) {
         ${setList ? `<ul class="sets">${setList}</ul>` : `<p class="empty-msg">${escapeHtml(t('teacher.noSets'))}</p>`}
       </section>
       </div>
-      ${premiumAsideHtml()}
     </main>
   `);
 
   root.replaceChildren(main);
   bindLogout(root, navigate);
-  bindPremiumAside(root);
   root.querySelector('#toggle-add-class').addEventListener('click', () => {
     if (classesFull) return;
     const box = root.querySelector('#add-class-box');

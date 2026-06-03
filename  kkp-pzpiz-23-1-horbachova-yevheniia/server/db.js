@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import Database from 'better-sqlite3';
+import bcrypt from 'bcrypt';
 import {
   seedDemoIfEmpty,
   seedStudentFlashDemoIfMissing,
@@ -234,6 +235,7 @@ export function initDb() {
   seedTeacherFlashDemoIfMissing(db);
   seedExtendedDemoIfMissing(db);
   seedStatsDemoIfMissing(db);
+  ensureAdminAccount(db);
   return db;
 }
 
@@ -258,11 +260,14 @@ function migrateUsersRoleIfNeeded(db) {
       survey_language TEXT,
       survey_level TEXT,
       consent_at TEXT,
+      time_format TEXT NOT NULL DEFAULT '24',
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
-    INSERT INTO users_new (id, name, email, password_hash, role, token, survey_language, survey_level, consent_at, created_at)
-    SELECT id, name, email, password_hash, role, token, survey_language, survey_level, consent_at, created_at
+    INSERT INTO users_new (id, name, email, password_hash, role, token, survey_language, survey_level, consent_at, time_format, created_at)
+    SELECT id, name, email, password_hash, role, token, survey_language, survey_level, consent_at,
+           COALESCE(time_format, '24'),
+           created_at
     FROM users;
 
     DROP TABLE users;
@@ -270,6 +275,18 @@ function migrateUsersRoleIfNeeded(db) {
   `);
   // знову вмикаємо перевірку зовнішніх ключів
   db.pragma('foreign_keys = ON');
+}
+
+
+function ensureAdminAccount(database) {
+  const existing = database
+    .prepare("SELECT id FROM users WHERE email = 'admin@learnly.local'")
+    .get();
+  if (existing) return;
+  const hash = bcrypt.hashSync('admin123', 10);
+  database
+    .prepare("INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, 'admin')")
+    .run('Адмін Системи', 'admin@learnly.local', hash);
 }
 
 // повертає базу (використовується в усіх маршрутах)
