@@ -147,6 +147,16 @@ const messages = {
     'teacher.err.classTitle': 'Назва класу має бути 1–200 символів',
     'teacher.err.setTitle': 'Назва набору має бути 1–200 символів',
     'teacher.err.setLanguage': 'Оберіть мову набору',
+
+    'limits.badgeTitle': 'Використано {current} з {max}',
+    'limits.classReached': 'Ліміт 3 класи. Оформіть преміум-підписку.',
+    'limits.setReached': 'Ліміт 10 наборів. Оформіть преміум-підписку.',
+    'limits.studentSetReached': 'Ліміт 10 наборів. Оформіть преміум-підписку.',
+    'premium.asideLabel': 'Преміум-підписка',
+    'premium.buy': 'Купити преміум',
+    'premium.hint': 'Безліміт класів і наборів',
+    'premium.comingSoon':
+      'Преміум-підписка незабаром. Поки що діють обмеження безкоштовного плану.',
     'teacher.classCode': 'Код класу',
     'teacher.students': 'Учні',
     'teacher.noStudents': 'Ще немає учнів.',
@@ -445,6 +455,16 @@ const messages = {
     'teacher.err.classTitle': 'Class name must be 1–200 characters',
     'teacher.err.setTitle': 'Set name must be 1–200 characters',
     'teacher.err.setLanguage': 'Choose a language for the set',
+
+    'limits.badgeTitle': 'Used {current} of {max}',
+    'limits.classReached': 'Limit of 3 classes. Get a premium subscription.',
+    'limits.setReached': 'Limit of 10 sets. Get a premium subscription.',
+    'limits.studentSetReached': 'Limit of 10 sets. Get a premium subscription.',
+    'premium.asideLabel': 'Premium subscription',
+    'premium.buy': 'Get premium',
+    'premium.hint': 'Unlimited classes and sets',
+    'premium.comingSoon':
+      'Premium subscription is coming soon. Free plan limits still apply.',
     'teacher.classCode': 'Class code',
     'teacher.students': 'Students',
     'teacher.noStudents': 'No students yet.',

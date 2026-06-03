@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { getDb } from './db.js';
 import { requireAuth } from './auth.js';
 import { requireStudent } from './middleware.js';
+import { countStudentSets, MAX_STUDENT_SETS } from './limits.js';
 
 const router = Router();
 const MAX_CARDS_PER_SET = 50; // максимум карток в одному наборі
@@ -44,6 +45,13 @@ router.post('/my-sets', requireAuth, requireStudent, (req, res) => {
 
   if (title.length < 1 || title.length > 200) {
     return res.status(400).json({ error: 'Назва набору 1–200 символів' });
+  }
+
+  const db = getDb();
+  if (countStudentSets(db, req.user.id) >= MAX_STUDENT_SETS) {
+    return res.status(400).json({
+      error: `Досягнуто ліміт: максимум ${MAX_STUDENT_SETS} наборів. Оформіть преміум-підписку.`,
+    });
   }
 
   const info = getDb()

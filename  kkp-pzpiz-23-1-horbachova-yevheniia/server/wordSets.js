@@ -3,6 +3,7 @@ import { Router } from 'express';
 import { getDb } from './db.js';
 import { requireAuth } from './auth.js';
 import { requireTeacher } from './middleware.js';
+import { countTeacherWordSets, MAX_TEACHER_WORD_SETS } from './limits.js';
 
 const router = Router();
 const MAX_CARDS_PER_SET = 50; // максимум карток в одному наборі
@@ -44,6 +45,13 @@ router.post('/word-sets', requireAuth, requireTeacher, (req, res) => {
 
   if (title.length < 1 || title.length > 200) {
     return res.status(400).json({ error: 'Назва набору 1–200 символів' });
+  }
+
+  const db = getDb();
+  if (countTeacherWordSets(db, req.user.id) >= MAX_TEACHER_WORD_SETS) {
+    return res.status(400).json({
+      error: `Досягнуто ліміт: максимум ${MAX_TEACHER_WORD_SETS} наборів. Оформіть преміум-підписку.`,
+    });
   }
 
   const info = getDb()

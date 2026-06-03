@@ -16,6 +16,11 @@ import {
 import { appState, resetStudyState, resetTestState, resetFlashState } from '../state.js';
 import { headerBar, bindLogout } from './auth.js';
 import { t } from '../i18n.js';
+import {
+  MAX_STUDENT_SETS,
+  isAtLimit,
+  limitBadgeHtml,
+} from '../limits.js';
 import { renderDoughnutChart } from '../charts.js';
 
 const LANGUAGES = [
@@ -62,6 +67,9 @@ export async function renderStudentDashboard(root, navigate) {
     )
     .join('');
 
+  const setCount = (sets || []).length;
+  const setsFull = isAtLimit(setCount, MAX_STUDENT_SETS);
+
   const setList = (sets || [])
     .map(
       (s) => `<li class="set-row">
@@ -87,9 +95,10 @@ export async function renderStudentDashboard(root, navigate) {
         </section>
         <section class="deck-section">
           <div class="deck-section-head">
-            <h2 class="deck-heading">${escapeHtml(t('student.mySetsTitle'))}</h2>
-            <button type="button" id="toggle-add-set" class="btn btn--secondary btn--sm">${escapeHtml(t('student.addSet'))}</button>
+            <h2 class="deck-heading">${escapeHtml(t('student.mySetsTitle'))} ${limitBadgeHtml(setCount, MAX_STUDENT_SETS)}</h2>
+            <button type="button" id="toggle-add-set" class="btn btn--secondary btn--sm"${setsFull ? ' disabled title="' + escapeHtml(t('limits.studentSetReached')) + '"' : ''}>${escapeHtml(t('student.addSet'))}</button>
           </div>
+          ${setsFull ? `<p class="limit-hint">${escapeHtml(t('limits.studentSetReached'))}</p>` : ''}
           <section class="add-word-box" id="add-set-box" hidden>
             <p class="add-word-title">${escapeHtml(t('student.newSet'))}</p>
             <form id="new-set-form" class="form">
@@ -118,12 +127,14 @@ export async function renderStudentDashboard(root, navigate) {
     });
   });
   root.querySelector('#toggle-add-set').addEventListener('click', () => {
+    if (setsFull) return;
     const box = root.querySelector('#add-set-box');
     box.hidden = !box.hidden;
     if (!box.hidden) box.querySelector('[name=title]').focus();
   });
   root.querySelector('#new-set-form').addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (setsFull) return;
     const errEl = root.querySelector('#set-err');
     errEl.textContent = '';
     const fd = new FormData(e.target);

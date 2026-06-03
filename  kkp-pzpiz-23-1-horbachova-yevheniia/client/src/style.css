@@ -586,6 +586,76 @@ h1 {
   margin: 0;
 }
 
+.deck-layout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 1rem 1.25rem;
+}
+
+.deck-layout__main {
+  flex: 1;
+  min-width: min(100%, 16rem);
+}
+
+.limit-badge {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0.1rem 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.35;
+  vertical-align: middle;
+  color: var(--text-muted);
+  background: var(--surface-2, rgba(0, 0, 0, 0.04));
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+
+.limit-badge--full {
+  color: var(--orange-dark);
+  border-color: var(--orange);
+  background: var(--orange-soft);
+}
+
+.limit-hint {
+  margin: 0 0 0.5rem;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.premium-aside {
+  flex: 0 0 auto;
+  width: 100%;
+  max-width: 11rem;
+  padding: 0.85rem 0.9rem;
+  text-align: center;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(160deg, var(--orange-soft) 0%, var(--surface) 55%);
+}
+
+.premium-aside__btn {
+  width: 100%;
+}
+
+.premium-aside__hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+@media (min-width: 720px) {
+  .deck-layout {
+    flex-wrap: nowrap;
+  }
+
+  .premium-aside {
+    margin-top: 2.5rem;
+  }
+}
+
 .deck-hint {
   margin: 0 0 0.8rem;
   font-size: 0.86rem;

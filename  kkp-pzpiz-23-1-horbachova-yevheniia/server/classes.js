@@ -3,6 +3,7 @@ import { getDb } from './db.js';
 import { requireAuth } from './auth.js';
 import { requireTeacher, requireStudent } from './middleware.js';
 import { generateClassCode, getClassForTeacher } from './helpers.js';
+import { countTeacherClasses, MAX_TEACHER_CLASSES } from './limits.js';
 
 const router = Router();
 
@@ -103,6 +104,13 @@ router.post('/classes', requireAuth, requireTeacher, (req, res) => {
 
   if (title.length < 1 || title.length > 200) {
     return res.status(400).json({ error: 'Назва класу 1–200 символів' });
+  }
+
+  const db = getDb();
+  if (countTeacherClasses(db, req.user.id) >= MAX_TEACHER_CLASSES) {
+    return res.status(400).json({
+      error: `Досягнуто ліміт: максимум ${MAX_TEACHER_CLASSES} класи. Оформіть преміум-підписку.`,
+    });
   }
 
   // унікальний код класу

@@ -24,7 +24,6 @@ const CORS_ORIGIN = process.env.CORS_ORIGIN || '*';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const requestLogPath = path.join(__dirname, 'data', 'request.log');
-const iotPath = path.join(__dirname, '..', 'iot');
 const clientDist = path.join(__dirname, '..', 'client', 'dist');
 fs.mkdirSync(path.dirname(requestLogPath), { recursive: true });
 
@@ -108,13 +107,6 @@ app.use('/api', studentSetsRouter);
 app.use('/api', adminRouter);
 app.use('/api', statsRouter);
 
-// IoT-симулятор (статичні файли)
-app.get('/iot/', (req, res) => {
-  res.sendFile(path.join(iotPath, 'index.html'));
-});
-app.get('/iot', (req, res) => res.redirect('/iot/'));
-app.use('/iot', express.static(iotPath, { redirect: false }));
-
 // веб-клієнт після npm run build у client/
 if (fs.existsSync(path.join(clientDist, 'index.html'))) {
   app.use(express.static(clientDist));
@@ -127,5 +119,4 @@ app.listen(PORT, () => {
   } else {
     console.log('Web: зберіть client (cd client && npm run build)');
   }
-  console.log('IoT: http://localhost:' + PORT + '/iot/');
 });

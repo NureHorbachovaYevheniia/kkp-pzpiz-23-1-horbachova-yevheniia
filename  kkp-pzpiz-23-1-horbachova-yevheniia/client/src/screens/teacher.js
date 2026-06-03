@@ -4,6 +4,14 @@ import { appState } from '../state.js';
 import { headerBar, bindLogout } from './auth.js';
 import { t } from '../i18n.js';
 import { renderBarChart } from '../charts.js';
+import {
+  MAX_TEACHER_CLASSES,
+  MAX_TEACHER_WORD_SETS,
+  bindPremiumAside,
+  isAtLimit,
+  limitBadgeHtml,
+  premiumAsideHtml,
+} from '../limits.js';
 
 const LANGUAGES = [
   'English',
@@ -43,6 +51,11 @@ export async function renderTeacherDashboard(root, navigate) {
     api('/api/word-sets'),
   ]);
 
+  const classCount = (classes || []).length;
+  const setCount = (sets || []).length;
+  const classesFull = isAtLimit(classCount, MAX_TEACHER_CLASSES);
+  const setsFull = isAtLimit(setCount, MAX_TEACHER_WORD_SETS);
+
   const classList = (classes || [])
     .map(
       (c) => `<li class="set-row">
@@ -75,8 +88,13 @@ export async function renderTeacherDashboard(root, navigate) {
     .join('');
 
   const main = el(`
-    <main class="box box--wide box--deck">
-      ${headerBar(appState.user, null, `<button type="button" id="toggle-add-class" class="btn btn--primary btn--sm">${escapeHtml(t('teacher.createClass'))}</button>`).outerHTML}
+    <main class="box box--wide box--deck deck-layout">
+      <div class="deck-layout__main">
+      ${headerBar(
+        appState.user,
+        null,
+        `<button type="button" id="toggle-add-class" class="btn btn--primary btn--sm"${classesFull ? ' disabled title="' + escapeHtml(t('limits.classReached')) + '"' : ''}>${escapeHtml(t('teacher.createClass'))}</button>`,
+      ).outerHTML}
       <section class="deck-section">
         <h2 class="deck-heading">${escapeHtml(t('teacher.dashboard.title'))}</h2>
         <p class="deck-hint">${escapeHtml(
@@ -88,7 +106,8 @@ export async function renderTeacherDashboard(root, navigate) {
         )}</p>
       </section>
       <section class="deck-section">
-        <h2 class="deck-heading">${escapeHtml(t('teacher.myClasses'))}</h2>
+        <h2 class="deck-heading">${escapeHtml(t('teacher.myClasses'))} ${limitBadgeHtml(classCount, MAX_TEACHER_CLASSES)}</h2>
+        ${classesFull ? `<p class="limit-hint">${escapeHtml(t('limits.classReached'))}</p>` : ''}
         <section class="add-word-box" id="add-class-box" hidden>
           <p class="add-word-title">${escapeHtml(t('teacher.newClass'))}</p>
           <form id="new-class-form" class="form">
@@ -103,9 +122,10 @@ export async function renderTeacherDashboard(root, navigate) {
       </section>
       <section class="deck-section">
         <div class="deck-section-head">
-          <h2 class="deck-heading">${escapeHtml(t('teacher.wordSets'))}</h2>
-          <button type="button" id="toggle-add-set" class="btn btn--secondary btn--sm">${escapeHtml(t('teacher.addSet'))}</button>
+          <h2 class="deck-heading">${escapeHtml(t('teacher.wordSets'))} ${limitBadgeHtml(setCount, MAX_TEACHER_WORD_SETS)}</h2>
+          <button type="button" id="toggle-add-set" class="btn btn--secondary btn--sm"${setsFull ? ' disabled title="' + escapeHtml(t('limits.setReached')) + '"' : ''}>${escapeHtml(t('teacher.addSet'))}</button>
         </div>
+        ${setsFull ? `<p class="limit-hint">${escapeHtml(t('limits.setReached'))}</p>` : ''}
         <section class="add-word-box" id="add-set-box" hidden>
           <p class="add-word-title">${escapeHtml(t('teacher.newSet'))}</p>
           <form id="new-set-form" class="form">
@@ -120,12 +140,16 @@ export async function renderTeacherDashboard(root, navigate) {
         </section>
         ${setList ? `<ul class="sets">${setList}</ul>` : `<p class="empty-msg">${escapeHtml(t('teacher.noSets'))}</p>`}
       </section>
+      </div>
+      ${premiumAsideHtml()}
     </main>
   `);
 
   root.replaceChildren(main);
   bindLogout(root, navigate);
+  bindPremiumAside(root);
   root.querySelector('#toggle-add-class').addEventListener('click', () => {
+    if (classesFull) return;
     const box = root.querySelector('#add-class-box');
     box.hidden = !box.hidden;
     if (!box.hidden) box.querySelector('[name=title]').focus();
@@ -133,6 +157,7 @@ export async function renderTeacherDashboard(root, navigate) {
 
   root.querySelector('#new-class-form').addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (classesFull) return;
     const errEl = root.querySelector('#class-err');
     errEl.textContent = '';
     const fd = new FormData(e.target);
@@ -165,6 +190,7 @@ export async function renderTeacherDashboard(root, navigate) {
   });
 
   root.querySelector('#toggle-add-set').addEventListener('click', () => {
+    if (setsFull) return;
     const box = root.querySelector('#add-set-box');
     box.hidden = !box.hidden;
     if (!box.hidden) box.querySelector('[name=title]').focus();
@@ -172,6 +198,7 @@ export async function renderTeacherDashboard(root, navigate) {
 
   root.querySelector('#new-set-form').addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (setsFull) return;
     const errEl = root.querySelector('#set-err');
     errEl.textContent = '';
     const fd = new FormData(e.target);
